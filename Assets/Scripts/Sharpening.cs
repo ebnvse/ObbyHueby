@@ -16,7 +16,7 @@ public class Sharpening : MonoBehaviour
     public int upgradeCost = 5;
 
     // Для теста стоят 100%, потом верни { 100, 100, 100, 80, 60, 50, 40, 30, 20, 10 }
-    private int[] upgradeChances = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
+    private int[] upgradeChances = { 100, 100, 100, 90, 80, 75, 70, 65, 55, 50 };
 
     [Header("Свечение меча и аура (как в L2)")]
     public int materialIndex = 1;
