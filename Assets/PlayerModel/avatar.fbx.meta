@@ -1,0 +1,292 @@
+fileFormatVersion: 2
+guid: 4d31c5ec784f7374c9da0ea4f8c8f28e
+ModelImporter:
+  serializedVersion: 22200
+  internalIDToNameTable: []
+  externalObjects: {}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 3
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
+  importAnimation: 1
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton:
+    - name: avatar(Clone)
+      parentName: 
+      position: {x: 0, y: 0, z: 0}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Handle1
+      parentName: avatar(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.00000003774895, y: 0, z: -0, w: 1}
+      scale: {x: 100, y: 100, z: 100}
+    - name: Rig14
+      parentName: avatar(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.00000003774895, y: 0, z: -0, w: 1}
+      scale: {x: 100, y: 100, z: 100}
+    - name: Armature
+      parentName: avatar(Clone)
+      position: {x: -0, y: 2.1421566, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 100, y: 100, z: 100}
+    - name: Bone
+      parentName: Armature
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Rig15
+      parentName: Bone
+      position: {x: -0, y: -0.021421565, z: 0}
+      rotation: {x: -0.00000003774895, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Bone.001
+      parentName: Bone
+      position: {x: -0, y: 0.01630046, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Rig10
+      parentName: Bone.001
+      position: {x: -0, y: -0.037722025, z: 0}
+      rotation: {x: -0.00000003774895, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Bone.001_end
+      parentName: Bone.001
+      position: {x: -0, y: 0.011944627, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Bone.003
+      parentName: Bone
+      position: {x: 0.006825499, y: 0.01630046, z: 0}
+      rotation: {x: -0.000000089406974, y: 0.000000029802326, z: 0.80164564, w: -0.5977996}
+      scale: {x: 0.9999997, y: 1, z: 1}
+    - name: Rig9
+      parentName: Bone.003
+      position: {x: 0.020176554, y: 0.032595176, z: -3.1949648e-10}
+      rotation: {x: -0.00000011012553, y: 0.000000006962126, z: 0.98244804, w: 0.1865363}
+      scale: {x: 1.0000005, y: 1.0000001, z: 1}
+    - name: Bone.004
+      parentName: Bone.003
+      position: {x: 8.9406943e-10, y: 0.00931111, z: 3.5527136e-17}
+      rotation: {x: 0.00000010167841, y: 0.0000000034842795, z: 0.11378741, w: 0.9935051}
+      scale: {x: 1, y: 1.0000001, z: 1}
+    - name: Rig8
+      parentName: Bone.004
+      position: {x: 0.014537811, y: 0.027164191, z: -0.0000000023100253}
+      rotation: {x: -0.00000009234482, y: 0.000000022111257, z: 0.99708873, w: 0.07625058}
+      scale: {x: 1.0000004, y: 1.0000001, z: 1}
+    - name: Bone.005
+      parentName: Bone.004
+      position: {x: 1.1175832e-10, y: 0.008632254, z: -7.9936054e-17}
+      rotation: {x: 0.000000014283923, y: 0.00000006385417, z: -0.05630552, w: 0.9984136}
+      scale: {x: 1, y: 0.9999999, z: 1}
+    - name: Rig7
+      parentName: Bone.005
+      position: {x: 0.01236204, y: 0.020048946, z: -0.0000000011415904}
+      rotation: {x: -0.00000015820073, y: 0.000000026250072, z: 0.9998002, w: 0.019987997}
+      scale: {x: 1.0000002, y: 1, z: 1}
+    - name: Bone.005_end
+      parentName: Bone.005
+      position: {x: -0, y: 0.0049261726, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Bone.006
+      parentName: Bone
+      position: {x: -0.006781747, y: 0.01630046, z: 0}
+      rotation: {x: -0.0000003576279, y: 0.00000032782557, z: 0.8016457, w: 0.59779954}
+      scale: {x: 1.0000002, y: 1, z: 1}
+    - name: Rig13
+      parentName: Bone.006
+      position: {x: -0.020135833, y: 0.032611217, z: -0.000000022256351}
+      rotation: {x: -0.00000042480136, y: 0.00000010852819, z: 0.98244804, w: -0.1865363}
+      scale: {x: 0.9999996, y: 0.9999998, z: 1}
+    - name: Bone.007
+      parentName: Bone.006
+      position: {x: 5.960454e-10, y: 0.009311109, z: 4.973799e-16}
+      rotation: {x: 0.00000010220235, y: -0.00000026483235, z: -0.11378737, w: 0.9935051}
+      scale: {x: 0.99999994, y: 0.99999994, z: 1}
+    - name: Rig12
+      parentName: Bone.007
+      position: {x: -0.014494555, y: 0.02717084, z: -0.0000000101731645}
+      rotation: {x: -0.0000001778276, y: 0.000000042772225, z: 0.99708873, w: -0.07625046}
+      scale: {x: 0.99999964, y: 1, z: 1}
+    - name: Bone.008
+      parentName: Bone.007
+      position: {x: 2.2351657e-10, y: 0.008632252, z: 4.6185276e-16}
+      rotation: {x: -0.000000032627305, y: 0.0000002269185, z: 0.05630526, w: 0.9984136}
+      scale: {x: 0.99999994, y: 0.99999994, z: 1}
+    - name: Rig11
+      parentName: Bone.008
+      position: {x: -0.01231832, y: 0.020050691, z: -0.000000015006103}
+      rotation: {x: -0.00000040388295, y: 0.000000037487276, z: 0.9998002, w: -0.019988235}
+      scale: {x: 0.9999995, y: 0.99999994, z: 1}
+    - name: Bone.008_end
+      parentName: Bone.008
+      position: {x: -0, y: 0.0049261726, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Bone.009
+      parentName: Armature
+      position: {x: 0.0041346774, y: 0, z: 0}
+      rotation: {x: 0.50000006, y: -0.50000006, z: 0.49999997, w: -0.49999994}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Rig4
+      parentName: Bone.009
+      position: {x: -3.1215946e-10, y: 0.021421565, z: -0.0041346774}
+      rotation: {x: 0.7071068, y: -0.000000053385076, z: 0.70710677, w: 0.00000005338508}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Bone.010
+      parentName: Bone.009
+      position: {x: -0, y: 0.009910102, z: 0}
+      rotation: {x: 0.008447796, y: -0.001435861, z: -0.08725336, w: 0.9961493}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Rig5
+      parentName: Bone.010
+      position: {x: -0.0038028185, y: 0.010865191, z: -0.0041346764}
+      rotation: {x: 0.6971117, y: 0.11847113, z: 0.6971115, w: -0.11847117}
+      scale: {x: 1, y: 0.99999994, z: 1}
+    - name: Bone.011
+      parentName: Bone.010
+      position: {x: -2.340215e-10, y: 0.011125365, z: 1.00496673e-10}
+      rotation: {x: -0.004958029, y: 0.0069886954, z: 0.76608133, w: 0.6426866}
+      scale: {x: 1.0000001, y: 1, z: 1}
+    - name: Rig6
+      parentName: Bone.011
+      position: {x: 0.001010693, y: 0.0036752694, z: -0.004134678}
+      rotation: {x: 0.50000006, y: -0.49999994, z: 0.4999999, w: 0.5000001}
+      scale: {x: 1, y: 0.9999999, z: 1}
+    - name: Bone.011_end
+      parentName: Bone.011
+      position: {x: -0, y: 0.010303881, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Bone.012
+      parentName: Armature
+      position: {x: -0.004109129, y: 0, z: 0}
+      rotation: {x: 0.50000006, y: -0.50000006, z: 0.49999997, w: -0.49999994}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Rig1
+      parentName: Bone.012
+      position: {x: 3.102306e-10, y: 0.021421565, z: 0.004109129}
+      rotation: {x: 0.7071068, y: -0.000000053385076, z: 0.70710677, w: 0.00000005338508}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Bone.013
+      parentName: Bone.012
+      position: {x: -0, y: 0.009910102, z: 0}
+      rotation: {x: -0.008447781, y: 0.0014355183, z: -0.08725345, w: 0.9961493}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Rig2
+      parentName: Bone.013
+      position: {x: -0.003802816, y: 0.010865191, z: 0.00410913}
+      rotation: {x: 0.6971117, y: 0.11847113, z: 0.6971115, w: -0.11847117}
+      scale: {x: 1, y: 0.99999994, z: 1}
+    - name: Bone.014
+      parentName: Bone.013
+      position: {x: -5.6240023e-11, y: 0.011125365, z: 3.9851988e-10}
+      rotation: {x: 0.0049585784, y: -0.006988654, z: 0.76608133, w: 0.64268655}
+      scale: {x: 1.0000001, y: 1, z: 1}
+    - name: Rig3
+      parentName: Bone.014
+      position: {x: 0.0010106956, y: 0.0036752694, z: 0.0041091284}
+      rotation: {x: 0.50000006, y: -0.49999994, z: 0.4999999, w: 0.5000001}
+      scale: {x: 1, y: 0.9999999, z: 1}
+    - name: Bone.014_end
+      parentName: Bone.014
+      position: {x: -0, y: 0.010303881, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 1
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 1
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 2
+  humanoidOversampling: 1
+  avatarSetup: 1
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
