@@ -1,5 +1,7 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
 public class Sharpening : MonoBehaviour
 {
@@ -8,15 +10,29 @@ public class Sharpening : MonoBehaviour
     public Money money;
     public TextMeshProUGUI currentUpgrade_Text;
 
+
+    [Header("UI процесса заточки")]
+    [Tooltip("Image с типом Filled (Horizontal / Radial), который заполняется от 0 до 1")]
+    public Image progressFillImage;
+    [Tooltip("Время заполнения полоски заточки в секундах")]
+    public float sharpenDuration = 1f;
+    [Tooltip("Кнопка запуска заточки")]
+    public Button sharpenButton;
+    [Tooltip("Кнопка отмены заточки (всегда видна на экране)")]
+    public Button cancelButton;
+
+    private Coroutine sharpenCoroutine;
+    private bool isSharpening = false;
+
     [Header("Настройки заточки")]
     public int currentUpgrade = 0;
-    public int maxUpgrade = 10;   
+    public int maxUpgrade = 16;   
     public int safeUpgrade = 3;    
     public int bonusPerLevel = 2;
     public int upgradeCost = 5;
 
-    // Для теста стоят 100%, потом верни { 100, 100, 100, 80, 60, 50, 40, 30, 20, 10 }
-    private int[] upgradeChances = { 100, 100, 100, 90, 80, 75, 70, 65, 55, 50 };
+    // Лайтовые шансы для уровней от +0 -> +1 до +15 -> +16
+    private int[] upgradeChances = { 100, 100, 100, 95, 92, 90, 88, 85, 82, 80, 77, 75, 72, 70, 68, 65 };
 
     [Header("Свечение меча и аура (как в L2)")]
     public int materialIndex = 1;
@@ -25,41 +41,105 @@ public class Sharpening : MonoBehaviour
     [Range(0.1f, 1f)]
     public float auraAlpha = 0.85f;       // Прозрачность ореола вокруг лезвия
 
-    [Tooltip("Цвета для уровней от +0 до +10 (всего 11 элементов)")]
+    [Tooltip("Цвета для уровней от +0 до +16 (всего 17 элементов)")]
     [ColorUsage(true, true)]
     public Color[] upgradeGlowColors = new Color[]
     {
         Color.black, Color.black, Color.black, Color.black, // +0..+3 (выкл)
-        Color.cyan, Color.cyan, Color.blue, Color.blue, Color.blue, Color.blue, // +4..+9
-        Color.red // +10
+        Color.cyan, Color.cyan, // +4..+5
+        Color.blue, Color.blue, Color.blue, Color.blue, Color.blue, Color.blue, // +6..+11
+        Color.red, Color.red, Color.red, Color.red, // +12..+15
+        new Color(1f, 0.2f, 0.8f) // +16
     };
-
 
     private void Start()
     {
+        ResetProgressUI();
         UpdateUI();
         UpdateWeaponGlow();
     }
 
-    public void SharpeningWeapon()
+    // Вешаем этот метод на OnClick кнопки "Точить"
+    public void StartSharpening()
     {
-        // ТЕСТОВЫЙ РЕЖИМ: при клике на +10 сбрасываем заточку на +0
+        if (isSharpening)
+            return;
+
         if (currentUpgrade >= maxUpgrade)
         {
-            playerStats.AtkDmg_Player -= currentUpgrade * bonusPerLevel;
-            currentUpgrade = 0;
-
-            UpdateWeaponGlow();
-            UpdateUI();
-            Debug.Log($"[ТЕСТ] Достигнут максимум! Заточка сброшена на +0. Ваш урон: {playerStats.AtkDmg_Player}");
-            return; 
+            Debug.Log($"Оружие уже достигло максимальной заточки (+{maxUpgrade})!");
+            return;
         }
+
+        if (money.current_money < upgradeCost)
+        {
+            Debug.Log("Недостаточно денег для заточки!");
+            return;
+        }
+
+        sharpenCoroutine = StartCoroutine(SharpenRoutine());
+    }
+
+    // Вешаем этот метод на OnClick кнопки "Отмена"
+    public void CancelSharpening()
+    {
+        if (!isSharpening)
+            return;
+
+        if (sharpenCoroutine != null)
+        {
+            StopCoroutine(sharpenCoroutine);
+            sharpenCoroutine = null;
+        }
+
+        ResetProgressUI();
+        Debug.Log("Заточка отменена игроком.");
+    }
+
+    private IEnumerator SharpenRoutine()
+    {
+        isSharpening = true;
+
+        if (sharpenButton != null) sharpenButton.interactable = false;
+
+        float elapsed = 0f;
+
+        if (progressFillImage != null)
+        {
+            progressFillImage.fillAmount = 0f;
+        }
+
+        while (elapsed < sharpenDuration)
+        {
+            elapsed += Time.deltaTime;
+            if (progressFillImage != null)
+            {
+                progressFillImage.fillAmount = Mathf.Clamp01(elapsed / sharpenDuration);
+            }
+            yield return null;
+        }
+
+        if (progressFillImage != null)
+        {
+            progressFillImage.fillAmount = 1f;
+        }
+
+        ExecuteSharpening();
+
+        ResetProgressUI();
+    }
+
+    private void ExecuteSharpening()
+    {
+        if (currentUpgrade >= maxUpgrade)
+            return;
 
         if (money.current_money >= upgradeCost)
         {
             money.current_money -= upgradeCost;
 
-            int chance = upgradeChances[currentUpgrade];
+            int chanceIndex = Mathf.Clamp(currentUpgrade, 0, upgradeChances.Length - 1);
+            int chance = upgradeChances[chanceIndex];
             int roll = Random.Range(1, 101);
 
             if (roll <= chance)
@@ -94,19 +174,41 @@ public class Sharpening : MonoBehaviour
         }
     }
 
+    private void ResetProgressUI()
+    {
+        isSharpening = false;
+        sharpenCoroutine = null;
+
+        if (progressFillImage != null)
+        {
+            progressFillImage.fillAmount = 0f;
+        }
+
+        if (sharpenButton != null)
+        {
+            sharpenButton.interactable = currentUpgrade < maxUpgrade;
+        }
+    }
+
     private void UpdateUI()
     {
         if (currentUpgrade_Text != null)
         {
             if (currentUpgrade >= maxUpgrade)
             {
-                currentUpgrade_Text.text = $"Меч заточен на : +{currentUpgrade} Шанс: MAX";
+                currentUpgrade_Text.text = $"+{currentUpgrade}";
             }
             else
             {
-                int nextChance = upgradeChances[currentUpgrade];
-                currentUpgrade_Text.text = $"Меч заточен на : +{currentUpgrade} Шанс: {nextChance}%";
+                int chanceIndex = Mathf.Clamp(currentUpgrade, 0, upgradeChances.Length - 1);
+                int nextChance = upgradeChances[chanceIndex];
+                currentUpgrade_Text.text = $"+{currentUpgrade}";
             }
+        }
+
+        if (sharpenButton != null && !isSharpening)
+        {
+            sharpenButton.interactable = currentUpgrade < maxUpgrade;
         }
     }
 
@@ -121,7 +223,6 @@ public class Sharpening : MonoBehaviour
 
         bool shouldGlow = currentUpgrade >= 4 && targetColor.maxColorComponent > 0.001f;
 
-        // 1. Обновляем Emission на материале самого меча
         if (weaponRenderer != null)
         {
             Material[] mats = weaponRenderer.materials;
@@ -141,7 +242,6 @@ public class Sharpening : MonoBehaviour
             }
         }
 
-        // 2. Включаем и красим ореол BladeAura вдоль лезвия
         if (bladeAuraRenderer != null)
         {
             bladeAuraRenderer.gameObject.SetActive(shouldGlow);
@@ -158,13 +258,21 @@ public class Sharpening : MonoBehaviour
                 Material auraMat = bladeAuraRenderer.material;
                 if (auraMat.HasProperty("_TintColor"))
                 {
-                    auraMat.SetColor("_TintColor", auraColor); // Для Legacy Shaders/Particles/Additive
+                    auraMat.SetColor("_TintColor", auraColor);
                 }
                 else
                 {
-                    auraMat.color = auraColor; // Для Mobile/Particles/Additive
+                    auraMat.color = auraColor;
                 }
             }
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (isSharpening)
+        {
+            CancelSharpening();
         }
     }
 }

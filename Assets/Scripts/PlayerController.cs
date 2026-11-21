@@ -12,11 +12,23 @@ public class PlayerController : MonoBehaviour
     public float runSpeed = 6f;
     public float rotationSpeed = 10f;
 
+    [Header("Target Lock System")]
+    public Transform currentTarget;
+    public float lockOnRadius = 8f;
+    public float unlockRadius = 11f;
+    public float lockOnRotationSpeed = 12f;
+    public LayerMask enemyLayer;
+
     [Header("Footstep Settings")]
     public float walkStepInterval = 0.5f;
     public float runStepInterval = 0.3f;
     private float stepTimer;
     private Sounds soundsManager;
+
+    [Range(0.1f, 1f)]
+    [Tooltip("Множитель скорости движения влево и вправо в режиме таргета (0.6 = 60% от обычной скорости)")]
+    public float targetStrafeSpeedMultiplier = 0.6f;
+
 
     [Header("Jump Settings")]
     public float jumpHeight = 2f;
@@ -70,6 +82,7 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         ReadInput();
+        HandleTargetLock();
         CalculateMovement();
         HandleJumpAndGravity();
         ApplyFinalMovement();
@@ -114,32 +127,105 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void HandleTargetLock()
+    {
+        if (currentTarget != null)
+        {
+            EnemyStats enemyStats = currentTarget.GetComponentInParent<EnemyStats>();
+            float distanceToTarget = Vector3.Distance(transform.position, currentTarget.position);
+
+            if (!currentTarget.gameObject.activeInHierarchy ||
+                (enemyStats != null && enemyStats.currentHealth <= 0) ||
+                distanceToTarget > unlockRadius)
+            {
+                currentTarget = null;
+            }
+        }
+
+        if (currentTarget == null)
+        {
+            int mask = enemyLayer.value == 0 ? ~0 : enemyLayer.value;
+            Collider[] hits = Physics.OverlapSphere(transform.position, lockOnRadius, mask);
+
+            float closestDistance = Mathf.Infinity;
+            Transform bestTarget = null;
+
+            foreach (var hit in hits)
+            {
+                EnemyStats enemy = hit.GetComponentInParent<EnemyStats>();
+                if (enemy != null && enemy.currentHealth > 0)
+                {
+                    float dist = Vector3.Distance(transform.position, enemy.transform.position);
+                    if (dist < closestDistance)
+                    {
+                        closestDistance = dist;
+                        bestTarget = enemy.transform;
+                    }
+                }
+            }
+
+            currentTarget = bestTarget;
+        }
+    }
+
     void CalculateMovement()
     {
-        Vector3 cameraForward = cameraTransform.forward;
-        Vector3 cameraRight = cameraTransform.right;
-
-        cameraForward.y = 0;
-        cameraRight.y = 0;
-
-        cameraForward.Normalize();
-        cameraRight.Normalize();
-
-        currentMoveDirection = Vector3.ClampMagnitude(cameraForward * vertical + cameraRight * horizontal, 1f);
-
-        rotationSpeed = isRunning ? 10f : 5f;
-
-        if (currentMoveDirection.sqrMagnitude > 0.01f)
+        if (currentTarget != null)
         {
-            Quaternion targetRotation =
-                Quaternion.LookRotation(currentMoveDirection) *
-                Quaternion.Euler(0, rotationOffset, 0);
+            Vector3 directionToEnemy = currentTarget.position - transform.position;
+            directionToEnemy.y = 0f;
 
-            transform.rotation = Quaternion.Slerp(
-                transform.rotation,
-                targetRotation,
-                rotationSpeed * Time.deltaTime
-            );
+            if (directionToEnemy.sqrMagnitude > 0.001f)
+            {
+                Vector3 forwardToEnemy = directionToEnemy.normalized;
+                Vector3 rightFromEnemy = Vector3.Cross(Vector3.up, forwardToEnemy);
+
+                // Ограничиваем входной вектор стика/клавиатуры, чтобы по диагонали не бежать быстрее
+                Vector2 clampedInput = Vector2.ClampMagnitude(new Vector2(horizontal, vertical), 1f);
+
+                // Движение вперёд/назад идёт с полной скоростью, а влево/вправо — с множителем targetStrafeSpeedMultiplier
+                Vector3 forwardMove = forwardToEnemy * clampedInput.y;
+                Vector3 strafeMove = rightFromEnemy * (clampedInput.x * targetStrafeSpeedMultiplier);
+
+                currentMoveDirection = forwardMove + strafeMove;
+
+                Quaternion targetRotation =
+                    Quaternion.LookRotation(forwardToEnemy) *
+                    Quaternion.Euler(0, rotationOffset, 0);
+
+                transform.rotation = Quaternion.Slerp(
+                    transform.rotation,
+                    targetRotation,
+                    lockOnRotationSpeed * Time.deltaTime
+                );
+            }
+        }
+        else
+        {
+            Vector3 cameraForward = cameraTransform.forward;
+            Vector3 cameraRight = cameraTransform.right;
+
+            cameraForward.y = 0;
+            cameraRight.y = 0;
+
+            cameraForward.Normalize();
+            cameraRight.Normalize();
+
+            currentMoveDirection = Vector3.ClampMagnitude(cameraForward * vertical + cameraRight * horizontal, 1f);
+            rotationSpeed = isRunning ? 10f : 5f;
+
+            if (currentMoveDirection.sqrMagnitude > 0.01f)
+            {
+                Quaternion targetRotation =
+                    Quaternion.LookRotation(currentMoveDirection) *
+                    Quaternion.Euler(0, rotationOffset, 0);
+
+                transform.rotation = Quaternion.Slerp(
+                    transform.rotation,
+                    targetRotation,
+                    rotationSpeed * Time.deltaTime
+                );
+            }
         }
     }
 
@@ -198,7 +284,6 @@ public class PlayerController : MonoBehaviour
             isGrounded = false;
         }
 
-        // Усиливаем гравитацию, когда персонаж летит вниз
         if (!isGrounded && velocity.y < 0f)
         {
             velocity.y += gravity * fallMultiplier * Time.deltaTime;
@@ -243,9 +328,39 @@ public class PlayerController : MonoBehaviour
 
     void UpdateAnimations()
     {
-        bool isMoving = horizontal != 0 || vertical != 0;
+        bool hasTarget = currentTarget != null;
+        bool isMoving = Mathf.Abs(horizontal) > 0.05f || Mathf.Abs(vertical) > 0.05f;
 
-        if (!isMoving)
+        bool isWalkingBack = false;
+        bool isWalkingRight = false;
+        bool isWalkingLeft = false;
+
+        if (hasTarget && isMoving)
+        {
+            // Если отклонение назад сильнее, чем вбок — идём назад
+            if (vertical < -0.1f && Mathf.Abs(vertical) >= Mathf.Abs(horizontal))
+            {
+                isWalkingBack = true;
+            }
+            // Шаг вправо
+            else if (horizontal > 0.05f)
+            {
+                isWalkingRight = true;
+            }
+            // Шаг влево
+            else if (horizontal < -0.05f)
+            {
+                isWalkingLeft = true;
+            }
+        }
+
+        animator.SetBool("Target", hasTarget);
+        animator.SetBool("TargetWalkBack", isWalkingBack);
+        animator.SetBool("TargetWalkRight", isWalkingRight);
+        animator.SetBool("TargeWalkLeft", isWalkingLeft);
+
+        // Если стоим или используем специальную таргет-анимацию — обычный Walk/Run выключены
+        if (!isMoving || isWalkingBack || isWalkingRight || isWalkingLeft)
         {
             animator.SetBool("IsWalking", false);
             animator.SetBool("IsRunning", false);
@@ -261,4 +376,5 @@ public class PlayerController : MonoBehaviour
             animator.SetBool("IsRunning", false);
         }
     }
+
 }
