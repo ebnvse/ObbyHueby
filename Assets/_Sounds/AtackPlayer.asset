@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24d859667dd862949b26ecd80d7c36ce, type: 3}
+  m_Name: AtackPlayer
+  m_EditorClassIdentifier: 
+  clips:
+  - {fileID: 8300000, guid: 39d278e4a6ecd7d40b14b26ee13a0aa6, type: 3}
+  - {fileID: 8300000, guid: 94d9fdec9fae4394494af6e68e85b34f, type: 3}
+  - {fileID: 8300000, guid: a6d245ebfbaa49646ab4e93b74c6d113, type: 3}
+  - {fileID: 8300000, guid: 85ea299bea66f9147a146544c08f1ba4, type: 3}
+  - {fileID: 8300000, guid: f7edc1b2b8269b849a028ad3cc969954, type: 3}
+  - {fileID: 8300000, guid: 1695969071f247943af87f6203bdca36, type: 3}
+  - {fileID: 8300000, guid: b2e47dce84d347943b9d81191823f94b, type: 3}
+  mixerGroup: {fileID: 0}
+  minVolume: 0.737
+  maxVolume: 0.737
+  minPitch: 0.95
+  maxPitch: 1.05
+  spatialBlend: 0
+  maxDistance: 25

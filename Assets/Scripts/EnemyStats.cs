@@ -7,6 +7,7 @@ public class EnemyStats : MonoBehaviour
     [Header("Здоровье врага")]
     public int maxHealth = 100;
     public int currentHealth;
+    public bool isDead;
 
     [Header("UI Здоровья врага")]
     [Tooltip("Родительский объект всей полоски ХП (Canvas или фон), который прячется до первого удара")]
@@ -116,6 +117,7 @@ public class EnemyStats : MonoBehaviour
 
     private void Die()
     {
+        isDead = true;
         Debug.Log($"Враг {gameObject.name} повержен!");
 
         if (enemyDeathSounds != null && enemyDeathSounds.Length > 0)

@@ -125,18 +125,20 @@ public class Sharpening : MonoBehaviour
         }
 
         ExecuteSharpening();
-
+        playerStats.UpdatePlayerStatsUI();
         ResetProgressUI();
     }
 
     private void ExecuteSharpening()
     {
+        
         if (currentUpgrade >= maxUpgrade)
             return;
 
         if (money.current_money >= upgradeCost)
         {
             money.current_money -= upgradeCost;
+            
 
             int chanceIndex = Mathf.Clamp(currentUpgrade, 0, upgradeChances.Length - 1);
             int chance = upgradeChances[chanceIndex];
@@ -150,6 +152,7 @@ public class Sharpening : MonoBehaviour
                 playerStats.AtkDmg_Player += bonusPerLevel;
                 UpdateUI();
                 Debug.Log($"Успех! Оружие заточено на +{currentUpgrade}. Ваш урон: {playerStats.AtkDmg_Player}");
+                
             }
             else
             {

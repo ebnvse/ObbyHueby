@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24d859667dd862949b26ecd80d7c36ce, type: 3}
+  m_Name: Player_Footstep
+  m_EditorClassIdentifier: 
+  clips:
+  - {fileID: 8300000, guid: 740252fdd48ae9541983d2baeda9c057, type: 3}
+  - {fileID: 8300000, guid: fdc4c6b85463518419f4ab5cb80153c9, type: 3}
+  - {fileID: 8300000, guid: 64a33317e1f13984dbd94a1c493eeac6, type: 3}
+  - {fileID: 8300000, guid: e23e51a7cde095442a3211f2102f7840, type: 3}
+  mixerGroup: {fileID: 0}
+  minVolume: 0.9
+  maxVolume: 0.537
+  minPitch: 0.95
+  maxPitch: 1.05
+  spatialBlend: 0
+  maxDistance: 25

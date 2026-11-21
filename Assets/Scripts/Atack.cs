@@ -7,11 +7,12 @@ using System.Collections.Generic;
 public class AttackController : MonoBehaviour
 {
     public PlayerStats playerStats;
-    
+
     [Header("Звуки")]
-    private Sounds soundsManager;
-    [SerializeField] private AudioSource audioSource;
-    [SerializeField] private AudioClip[] hitSounds;
+    [Tooltip("Звук взмаха при начале атаки (AtackPlayer)")]
+    [SerializeField] private SoundEvent attackSwingSound;
+    [Tooltip("Звук попадания по врагу (PlayerTakeHit)")]
+    [SerializeField] private SoundEvent attackHitSound;
 
     [Header("Управление")]
     [Tooltip("Включите, если хотите также атаковать кликом мыши по экрану (на ПК)")]
@@ -43,16 +44,6 @@ public class AttackController : MonoBehaviour
     [SerializeField] private float spreadAngle = 45f;
 
     private readonly HashSet<EnemyStats> hitEnemies = new HashSet<EnemyStats>();
-
-    private void Awake()
-    {
-        soundsManager = GetComponentInParent<Sounds>();
-
-        if (audioSource == null)
-        {
-            audioSource = GetComponentInParent<AudioSource>();
-        }
-    }
 
     private void Update()
     {
@@ -117,9 +108,10 @@ public class AttackController : MonoBehaviour
 
         animator.Play(chosenAnimation, attackLayer, 0f);
 
-        if (soundsManager != null)
+        // Играем звук взмаха (AtackPlayer) в позиции игрока
+        if (attackSwingSound != null)
         {
-            soundsManager.PlayRandomAttack();
+            attackSwingSound.Play(transform.position);
         }
 
         StartCoroutine(AttackWithDelay());
@@ -174,25 +166,26 @@ public class AttackController : MonoBehaviour
 
                 if (enemyStats != null && hitEnemies.Add(enemyStats))
                 {
-                    int finalDamage = playerStats.CalculationAtackDamagePlayer(enemyStats.Def_Enemy, playerStats.AtkDmg_Player);
-                    enemyStats.TakeDamage(finalDamage);
+                    int finalDamage = playerStats.CalculationAtackDamagePlayer(enemyStats.Def_Enemy,
+                     playerStats.AtkDmg_Player, playerStats.Critical_Chance, playerStats.Critical_Chance_multiplier);
 
-                    PlayHitSound();
+                    enemyStats.TakeDamage(finalDamage);
+                    if (enemyStats.isDead == true)
+                    {
+                        playerStats.AddExpToPlayer();
+                    }
+
+                    // Играем звук попадания (PlayerTakeHit) прямо в точке контакта с врагом!
+                    if (attackHitSound != null)
+                    {
+                        attackHitSound.Play(hit.point);
+                    }
                 }
             }
             else
             {
                 Debug.DrawRay(rayOrigin.position, direction * maxDistance, Color.red, 1f);
             }
-        }
-    }
-
-    private void PlayHitSound()
-    {
-        if (audioSource != null && hitSounds != null && hitSounds.Length > 0)
-        {
-            AudioClip clip = hitSounds[Random.Range(0, hitSounds.Length)];
-            audioSource.PlayOneShot(clip);
         }
     }
 }

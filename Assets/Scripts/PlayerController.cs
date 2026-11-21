@@ -22,13 +22,12 @@ public class PlayerController : MonoBehaviour
     [Header("Footstep Settings")]
     public float walkStepInterval = 0.5f;
     public float runStepInterval = 0.3f;
+    public SoundEvent footstepSound;
     private float stepTimer;
-    private Sounds soundsManager;
 
     [Range(0.1f, 1f)]
     [Tooltip("Множитель скорости движения влево и вправо в режиме таргета (0.6 = 60% от обычной скорости)")]
     public float targetStrafeSpeedMultiplier = 0.6f;
-
 
     [Header("Jump Settings")]
     public float jumpHeight = 2f;
@@ -71,7 +70,6 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         controller = GetComponent<CharacterController>();
-        soundsManager = GetComponent<Sounds>();
     }
 
     public void MobileChangeMoveState()
@@ -180,10 +178,8 @@ public class PlayerController : MonoBehaviour
                 Vector3 forwardToEnemy = directionToEnemy.normalized;
                 Vector3 rightFromEnemy = Vector3.Cross(Vector3.up, forwardToEnemy);
 
-                // Ограничиваем входной вектор стика/клавиатуры, чтобы по диагонали не бежать быстрее
                 Vector2 clampedInput = Vector2.ClampMagnitude(new Vector2(horizontal, vertical), 1f);
 
-                // Движение вперёд/назад идёт с полной скоростью, а влево/вправо — с множителем targetStrafeSpeedMultiplier
                 Vector3 forwardMove = forwardToEnemy * clampedInput.y;
                 Vector3 strafeMove = rightFromEnemy * (clampedInput.x * targetStrafeSpeedMultiplier);
 
@@ -309,7 +305,7 @@ public class PlayerController : MonoBehaviour
     {
         bool isMoving = horizontal != 0 || vertical != 0;
 
-        if (!isGrounded || !isMoving || soundsManager == null)
+        if (!isGrounded || !isMoving || footstepSound == null)
         {
             stepTimer = 0f;
             return;
@@ -321,7 +317,7 @@ public class PlayerController : MonoBehaviour
         if (stepTimer <= 0f)
         {
             float stepVolume = isRunning ? 0.9f : 0.6f;
-            soundsManager.PlayRandomFootstep(stepVolume);
+            footstepSound.Play(transform.position, stepVolume);
             stepTimer = currentInterval;
         }
     }
@@ -334,47 +330,39 @@ public class PlayerController : MonoBehaviour
         bool isWalkingBack = false;
         bool isWalkingRight = false;
         bool isWalkingLeft = false;
-
         if (hasTarget && isMoving)
         {
-            // Если отклонение назад сильнее, чем вбок — идём назад
-            if (vertical < -0.1f && Mathf.Abs(vertical) >= Mathf.Abs(horizontal))
-            {
-                isWalkingBack = true;
-            }
-            // Шаг вправо
-            else if (horizontal > 0.05f)
-            {
-                isWalkingRight = true;
-            }
-            // Шаг влево
-            else if (horizontal < -0.05f)
-            {
-                isWalkingLeft = true;
-            }
+        if (vertical < -0.1f && Mathf.Abs(vertical) >= Mathf.Abs(horizontal))
+        {
+        isWalkingBack = true;
         }
-
+        else if (horizontal > 0.05f)
+        {
+        isWalkingRight = true;
+        }
+        else if (horizontal < -0.05f)
+        {
+        isWalkingLeft = true;
+        }
+        }
         animator.SetBool("Target", hasTarget);
         animator.SetBool("TargetWalkBack", isWalkingBack);
         animator.SetBool("TargetWalkRight", isWalkingRight);
         animator.SetBool("TargeWalkLeft", isWalkingLeft);
-
-        // Если стоим или используем специальную таргет-анимацию — обычный Walk/Run выключены
         if (!isMoving || isWalkingBack || isWalkingRight || isWalkingLeft)
         {
-            animator.SetBool("IsWalking", false);
-            animator.SetBool("IsRunning", false);
+        animator.SetBool("IsWalking", false);
+        animator.SetBool("IsRunning", false);
         }
         else if (isRunning)
         {
-            animator.SetBool("IsRunning", true);
-            animator.SetBool("IsWalking", false);
+        animator.SetBool("IsRunning", true);
+        animator.SetBool("IsWalking", false);
         }
         else
         {
-            animator.SetBool("IsWalking", true);
-            animator.SetBool("IsRunning", false);
+        animator.SetBool("IsWalking", true);
+        animator.SetBool("IsRunning", false);
         }
     }
-
 }
