@@ -8,10 +8,12 @@ public class PlayerStats : MonoBehaviour
     [Header("Характеристики игрока")]
     public int AtkDmg_Player = 20;
     public int Def_Player = 10;
-    public float AtkSpped_Player = 1;
+    public float AtkSpped_Player = 1f; // Шкала для игрока от 1 до 10
+    public float baseAttackCooldown = 0.5f; // Кулдаун при скорости 1
     public int Speed_Player = 5;
     public TreeTalent treeTalent;
     public PlayerController playerController;
+    public AttackController attackController;
     
     [Header("Критический урон")]
     public float Critical_Chance_multiplier = 1.5f; // Множитель должен быть > 1 (например, 1.5 = +50% урона)
@@ -88,6 +90,7 @@ public class PlayerStats : MonoBehaviour
         isDead = false;
         NextLevelPlayer = currentLevelPlayer + 1;
 
+        ApplyAttackSpeed();
         UpdateHealthUI();
         UpdatePlayerStatsUI();
         UpdateExpUIImmediate();
@@ -96,6 +99,14 @@ public class PlayerStats : MonoBehaviour
         {
             deathPanel.SetActive(false);
         }
+    }
+
+    public void ApplyAttackSpeed()
+    {
+        if (attackController == null) return;
+
+        float safeSpeed = Mathf.Clamp(AtkSpped_Player, 1f, 10f);
+        attackController.attackCooldown = baseAttackCooldown / safeSpeed;
     }
 
     public int CalculationAtackDamagePlayer(int Enemy_Def, int Player_AtackDamage, float critChanse, float critMultipler)
@@ -241,7 +252,7 @@ public class PlayerStats : MonoBehaviour
     {
         AtkDmg_Player_Text.text = $"Атака:" + AtkDmg_Player.ToString();
         Def_Player_Text.text = $"Защита:" + Def_Player.ToString();
-        AtkSpped_Player_Text.text = $"Скорость атаки:" + AtkSpped_Player.ToString();
+        AtkSpped_Player_Text.text = $"Скорость атаки: {AtkSpped_Player:0.#}";
         Speed_Player_Text.text = $"Скорость бега:" + Speed_Player.ToString();
         int critPercent = Mathf.RoundToInt(Critical_Chance * 100f);
         Critical_Chance_Text.text = $"Шанс Крит. Атаки: {critPercent}%";

@@ -12,6 +12,8 @@ public class PlayerAnimatorController : MonoBehaviour
     [Tooltip("Точные названия состояний атак на 1-м слое Animator")]
     public string[] attackStateNames = { "Attack1", "Attack2" };
     public float blendSpeed = 10f;
+    [Tooltip("Максимальный множитель скорости анимации удара (чтобы на 10 уровне перс не махал слишком дёргано)")]
+    public float maxAnimSpeedMultiplier = 4f;
 
     // Слой 0: Движение, прыжок, таргет-лок и смерть
     private readonly int IdleHash = Animator.StringToHash("Idle");
@@ -25,6 +27,9 @@ public class PlayerAnimatorController : MonoBehaviour
     private readonly int TargetWalkRightHash = Animator.StringToHash("TargetWalkRight");
 
     private readonly int DeathHash = Animator.StringToHash("Death");
+
+    // Параметр скорости атаки в окне Animator
+    private readonly int AttackSpeedParamHash = Animator.StringToHash("AttackSpeed");
 
     private int currentBaseAnim;
 
@@ -66,7 +71,6 @@ public class PlayerAnimatorController : MonoBehaviour
         if (animator == null || playerController == null)
             return;
 
-        // Если игрок мертв — играем Death и плавно выключаем слой атак
         if (playerStats != null && playerStats.isDead)
         {
             PlayBaseAnimation(DeathHash, 0.15f);
@@ -112,23 +116,19 @@ public class PlayerAnimatorController : MonoBehaviour
         float h = playerController.InputHorizontal;
         float v = playerController.InputVertical;
 
-        // Если отклонение назад сильнее, чем вбок — идем назад
         if (v < -0.1f && Mathf.Abs(v) >= Mathf.Abs(h))
         {
             return TargetWalkBackHash;
         }
-        // Шаг вправо
         if (h > 0.05f)
         {
             return TargetWalkRightHash;
         }
-        // Шаг влево
         if (h < -0.05f)
         {
             return TargetWalkLeftHash;
         }
 
-        // Движение вперед на врага в таргете — обычный бег или шаг
         return playerController.IsRunning ? RunHash : WalkHash;
     }
 
@@ -148,6 +148,13 @@ public class PlayerAnimatorController : MonoBehaviour
 
         if (playerStats != null && playerStats.isDead)
             return;
+
+        float speedMult = 1f;
+        if (playerStats != null)
+        {
+            speedMult = Mathf.Clamp(playerStats.AtkSpped_Player, 1f, maxAnimSpeedMultiplier);
+        }
+        animator.SetFloat(AttackSpeedParamHash, speedMult);
 
         int index = Random.Range(0, attackStateNames.Length);
         if (attackStateNames.Length > 1 && index == lastAttackIndex)
@@ -173,8 +180,9 @@ public class PlayerAnimatorController : MonoBehaviour
             }
         }
 
+        float currentSpeedMult = playerStats != null ? Mathf.Clamp(playerStats.AtkSpped_Player, 1f, maxAnimSpeedMultiplier) : 1f;
         float targetWeight = isPlayingAttack ? 1f : 0f;
-        upperLayerWeight = Mathf.MoveTowards(upperLayerWeight, targetWeight, blendSpeed * Time.deltaTime);
+        upperLayerWeight = Mathf.MoveTowards(upperLayerWeight, targetWeight, (blendSpeed * currentSpeedMult) * Time.deltaTime);
         animator.SetLayerWeight(1, upperLayerWeight);
     }
 }

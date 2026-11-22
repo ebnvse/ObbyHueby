@@ -6,13 +6,14 @@ public class TreeTalent : MonoBehaviour
 {
     [Header("Очки умений")]
     public int current_score;
-    public TextMeshProUGUI scoreText; // Опционально: текст для отображения свободных очков
+    public TextMeshProUGUI scoreText;
 
     [Header("Сколько прибавлять за 1 очко")]
     public int damagePerc = 2;
     public int defPerc = 2;
     public int speedPerc = 1;
-    public float atkSpeedPerc = 0.1f;
+    public float atkSpeedPerc = 0.5f;
+    public float maxAtkSpeed = 10f;
 
     [Header("Кнопки")]
     public Button Damage_Button;
@@ -61,19 +62,23 @@ public class TreeTalent : MonoBehaviour
         if (!TrySpendPoint()) return;
 
         playerStats.Speed_Player += speedPerc;
-        playerStats.playerController.runSpeed = playerStats.Speed_Player;
+        if (playerStats.playerController != null)
+        {
+            playerStats.playerController.runSpeed = playerStats.Speed_Player;
+        }
         ApplyChanges();
     }
 
     public void UpgradeAtkSpeed()
     {
+        if (playerStats == null || playerStats.AtkSpped_Player >= maxAtkSpeed) return;
         if (!TrySpendPoint()) return;
 
-        playerStats.AtkSpped_Player -= atkSpeedPerc;
+        playerStats.AtkSpped_Player = Mathf.Min(maxAtkSpeed, playerStats.AtkSpped_Player + atkSpeedPerc);
+        playerStats.ApplyAttackSpeed();
         ApplyChanges();
     }
 
-    // Метод для начисления очков (например, вызывать из PlayerStats.LevelUp())
     public void AddSkillPoints(int amount = 1)
     {
         current_score += amount;
@@ -102,12 +107,12 @@ public class TreeTalent : MonoBehaviour
             scoreText.text = $"Очки умений: {current_score}";
         }
 
-        // Если очков нет — кнопки автоматически становятся серыми и не нажимаются
         bool hasPoints = current_score > 0;
 
         if (Damage_Button != null) Damage_Button.interactable = hasPoints;
         if (Def_Button != null) Def_Button.interactable = hasPoints;
         if (Speed_Button != null) Speed_Button.interactable = hasPoints;
-        if (AtkSpeed_Button != null) AtkSpeed_Button.interactable = hasPoints;
+        if (AtkSpeed_Button != null)
+            AtkSpeed_Button.interactable = hasPoints && (playerStats != null && playerStats.AtkSpped_Player < maxAtkSpeed);
     }
 }

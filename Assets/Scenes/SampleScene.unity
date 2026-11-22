@@ -2757,10 +2757,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   AtkDmg_Player: 20
   Def_Player: 5
-  AtkSpped_Player: 0.8
+  AtkSpped_Player: 1
+  baseAttackCooldown: 0.5
   Speed_Player: 20
   treeTalent: {fileID: 1716571417}
   playerController: {fileID: 186539440}
+  attackController: {fileID: 581233514}
   Critical_Chance_multiplier: 1.5
   Critical_Chance: 0.35
   maxHealth: 100
@@ -10595,6 +10597,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   money: {fileID: 0}
   PetOfAtackSpeed: {fileID: 888023392}
+  playerStats: {fileID: 186539448}
 --- !u!65 &824664111
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13616,7 +13619,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &968449030
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24306,6 +24309,7 @@ RectTransform:
   - {fileID: 31398269}
   - {fileID: 1189351816}
   - {fileID: 1921480967}
+  - {fileID: 598968274}
   - {fileID: 158088905}
   - {fileID: 891707796}
   - {fileID: 594978267}
@@ -24317,7 +24321,6 @@ RectTransform:
   - {fileID: 463534804}
   - {fileID: 2106780552}
   - {fileID: 1610741425}
-  - {fileID: 598968274}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -24381,12 +24384,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfd5c876b8967544497b2cca87ad13db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  current_score: 0
+  current_score: 111
   scoreText: {fileID: 1881624543}
   damagePerc: 2
   defPerc: 3
   speedPerc: 2
-  atkSpeedPerc: 0.1
+  atkSpeedPerc: 1
+  maxAtkSpeed: 10
   Damage_Button: {fileID: 1648856544}
   Def_Button: {fileID: 1289109969}
   Speed_Button: {fileID: 331526789}
@@ -30166,6 +30170,7 @@ MonoBehaviour:
   - Attack3
   - Attack4
   blendSpeed: 10
+  maxAnimSpeedMultiplier: 4
 --- !u!1001 &6798728844917193202
 PrefabInstance:
   m_ObjectHideFlags: 0
