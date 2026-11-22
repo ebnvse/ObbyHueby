@@ -12,7 +12,7 @@ public class TreeTalent : MonoBehaviour
     public int damagePerc = 2;
     public int defPerc = 2;
     public int speedPerc = 1;
-    public int atkSpeedPerc = 1;
+    public float atkSpeedPerc = 0.1f;
 
     [Header("Кнопки")]
     public Button Damage_Button;
@@ -61,6 +61,7 @@ public class TreeTalent : MonoBehaviour
         if (!TrySpendPoint()) return;
 
         playerStats.Speed_Player += speedPerc;
+        playerStats.playerController.runSpeed = playerStats.Speed_Player;
         ApplyChanges();
     }
 
@@ -68,7 +69,7 @@ public class TreeTalent : MonoBehaviour
     {
         if (!TrySpendPoint()) return;
 
-        playerStats.AtkSpped_Player += atkSpeedPerc;
+        playerStats.AtkSpped_Player -= atkSpeedPerc;
         ApplyChanges();
     }
 

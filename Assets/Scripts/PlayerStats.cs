@@ -8,9 +8,10 @@ public class PlayerStats : MonoBehaviour
     [Header("Характеристики игрока")]
     public int AtkDmg_Player = 20;
     public int Def_Player = 10;
-    public int AtkSpped_Player = 1;
+    public float AtkSpped_Player = 1;
     public int Speed_Player = 5;
     public TreeTalent treeTalent;
+    public PlayerController playerController;
     
     [Header("Критический урон")]
     public float Critical_Chance_multiplier = 1.5f; // Множитель должен быть > 1 (например, 1.5 = +50% урона)
@@ -54,9 +55,6 @@ public class PlayerStats : MonoBehaviour
 
     [Header("Смерть и возрождение")]
     public GameObject deathPanel;
-    public Animator animator;
-    public string deathStateName = "Death";
-    public int deathLayerIndex = 0;
     public float respawnHeightY = 1f;
 
     [Header("UI Здоровья")]
@@ -82,11 +80,6 @@ public class PlayerStats : MonoBehaviour
     {
         characterController = GetComponent<CharacterController>();
         rb = GetComponent<Rigidbody>();
-
-        if (animator == null)
-        {
-            animator = GetComponentInChildren<Animator>();
-        }
     }
 
     private void Start()
@@ -196,11 +189,6 @@ public class PlayerStats : MonoBehaviour
             hurtVoiceSound.Play(transform.position);
         }
 
-        if (animator != null && !string.IsNullOrEmpty(deathStateName))
-        {
-            animator.Play(deathStateName, deathLayerIndex, 0f);
-        }
-
         if (deathPanel != null)
         {
             deathPanel.SetActive(true);
@@ -223,11 +211,6 @@ public class PlayerStats : MonoBehaviour
         if (deathPanel != null)
         {
             deathPanel.SetActive(false);
-        }
-
-        if (animator != null)
-        {
-            animator.Play("Idle", 0, 0f);
         }
     }
 
@@ -283,7 +266,6 @@ public class PlayerStats : MonoBehaviour
         popup.Setup(damage, isCrit);
     }
 
-    // Мгновенное обновление UI (используется при старте игры)
     public void UpdateExpUIImmediate()
     {
         if (expToNextLevel <= 0) return;
@@ -324,7 +306,6 @@ public class PlayerStats : MonoBehaviour
 
     public void AddExpToPlayer()
     {
-        // С каждым уровнем уменьшаем награду (например: 1 лвл = 25, 2 лвл = 22, 3 лвл = 20 и т.д.)
         float penaltyFactor = Mathf.Pow(expGainMultiplierPerLevel, currentLevelPlayer - 1);
         int gainedExp = Mathf.Max(1, Mathf.RoundToInt(baseExpReward * penaltyFactor));
 
@@ -348,12 +329,10 @@ public class PlayerStats : MonoBehaviour
 
     private IEnumerator AnimateExpBarRoutine(int levelsGained, float targetRatio)
     {
-        // Если был ап уровня — сначала плавно дотягиваем полоску до 100% за каждый полученный уровень
         for (int i = 0; i < levelsGained; i++)
         {
             yield return StartCoroutine(FillBarToTarget(1f));
 
-            // Сбрасываем полоску в 0% перед заполнением следующего уровня
             if (expFillImage != null)
                 expFillImage.fillAmount = 0f;
 
@@ -361,10 +340,8 @@ public class PlayerStats : MonoBehaviour
                 currentExpPlayer_Text.text = "0%";
         }
 
-        // Обновляем цифры уровней на экране после прохождения отметки 100%
         UpdateLevelTexts();
 
-        // Плавно доводим полоску до актуального остатка опыта
         yield return StartCoroutine(FillBarToTarget(targetRatio));
     }
 

@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!319 &31900000
+AvatarMask:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: newAvatar
+  m_Mask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+  m_Elements:
+  - m_Path: 
+    m_Weight: 1
+  - m_Path: Armature
+    m_Weight: 1
+  - m_Path: Armature/Bone
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.001
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.001/Bone.001_end
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.001/Rig10
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.003
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.003/Bone.004
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.003/Bone.004/Bone.005
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.003/Bone.004/Bone.005/Bone.005_end
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.003/Bone.004/Bone.005/Rig7
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.003/Bone.004/Rig8
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.003/Rig9
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.006
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.006/Bone.007
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.006/Bone.007/Bone.008
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.006/Bone.007/Bone.008/Bone.008_end
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.006/Bone.007/Bone.008/Rig11
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.006/Bone.007/Rig12
+    m_Weight: 1
+  - m_Path: Armature/Bone/Bone.006/Rig13
+    m_Weight: 1
+  - m_Path: Armature/Bone/Rig15
+    m_Weight: 1
+  - m_Path: Armature/Bone.009
+    m_Weight: 0
+  - m_Path: Armature/Bone.009/Bone.010
+    m_Weight: 0
+  - m_Path: Armature/Bone.009/Bone.010/Bone.011
+    m_Weight: 0
+  - m_Path: Armature/Bone.009/Bone.010/Bone.011/Bone.011_end
+    m_Weight: 1
+  - m_Path: Armature/Bone.009/Bone.010/Bone.011/Rig6
+    m_Weight: 1
+  - m_Path: Armature/Bone.009/Bone.010/Rig5
+    m_Weight: 1
+  - m_Path: Armature/Bone.009/Rig4
+    m_Weight: 1
+  - m_Path: Armature/Bone.012
+    m_Weight: 0
+  - m_Path: Armature/Bone.012/Bone.013
+    m_Weight: 0
+  - m_Path: Armature/Bone.012/Bone.013/Bone.014
+    m_Weight: 0
+  - m_Path: Armature/Bone.012/Bone.013/Bone.014/Bone.014_end
+    m_Weight: 1
+  - m_Path: Armature/Bone.012/Bone.013/Bone.014/Rig3
+    m_Weight: 1
+  - m_Path: Armature/Bone.012/Bone.013/Rig2
+    m_Weight: 1
+  - m_Path: Armature/Bone.012/Rig1
+    m_Weight: 1
+  - m_Path: Handle1
+    m_Weight: 1
+  - m_Path: Rig14
+    m_Weight: 1

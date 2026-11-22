@@ -40,8 +40,14 @@ public class PlayerController : MonoBehaviour
     private float jumpBufferCounter;
     private float coyoteTimeCounter;
 
-    [Header("Animation")]
-    public Animator animator;
+    [Header("Animator")]
+    public bool IsMoving => Mathf.Abs(horizontal) > 0.05f || Mathf.Abs(vertical) > 0.05f;
+    public bool IsRunning => isRunning;
+    public bool IsGrounded => isGrounded;
+    public bool HasTarget => currentTarget != null;
+    public float InputHorizontal => horizontal;
+    public float InputVertical => vertical;
+
 
     private CharacterController controller;
     private Vector3 velocity;
@@ -85,7 +91,6 @@ public class PlayerController : MonoBehaviour
         HandleJumpAndGravity();
         ApplyFinalMovement();
         HandleFootsteps();
-        UpdateAnimations();
     }
 
     void ReadInput()
@@ -255,12 +260,10 @@ public class PlayerController : MonoBehaviour
             {
                 velocity.y = -2f;
             }
-            animator.SetBool("Jump", false);
         }
         else
         {
             coyoteTimeCounter -= Time.deltaTime;
-            animator.SetBool("Jump", true);
         }
 
         if ((Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame) || JumpBittonWasPressed)
@@ -319,50 +322,6 @@ public class PlayerController : MonoBehaviour
             float stepVolume = isRunning ? 0.9f : 0.6f;
             footstepSound.Play(transform.position, stepVolume);
             stepTimer = currentInterval;
-        }
-    }
-
-    void UpdateAnimations()
-    {
-        bool hasTarget = currentTarget != null;
-        bool isMoving = Mathf.Abs(horizontal) > 0.05f || Mathf.Abs(vertical) > 0.05f;
-
-        bool isWalkingBack = false;
-        bool isWalkingRight = false;
-        bool isWalkingLeft = false;
-        if (hasTarget && isMoving)
-        {
-        if (vertical < -0.1f && Mathf.Abs(vertical) >= Mathf.Abs(horizontal))
-        {
-        isWalkingBack = true;
-        }
-        else if (horizontal > 0.05f)
-        {
-        isWalkingRight = true;
-        }
-        else if (horizontal < -0.05f)
-        {
-        isWalkingLeft = true;
-        }
-        }
-        animator.SetBool("Target", hasTarget);
-        animator.SetBool("TargetWalkBack", isWalkingBack);
-        animator.SetBool("TargetWalkRight", isWalkingRight);
-        animator.SetBool("TargeWalkLeft", isWalkingLeft);
-        if (!isMoving || isWalkingBack || isWalkingRight || isWalkingLeft)
-        {
-        animator.SetBool("IsWalking", false);
-        animator.SetBool("IsRunning", false);
-        }
-        else if (isRunning)
-        {
-        animator.SetBool("IsRunning", true);
-        animator.SetBool("IsWalking", false);
-        }
-        else
-        {
-        animator.SetBool("IsWalking", true);
-        animator.SetBool("IsRunning", false);
         }
     }
 }

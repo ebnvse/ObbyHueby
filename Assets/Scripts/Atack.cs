@@ -18,16 +18,9 @@ public class AttackController : MonoBehaviour
     [Tooltip("Включите, если хотите также атаковать кликом мыши по экрану (на ПК)")]
     [SerializeField] public bool allowMouseClickAttack = false;
 
-    [Header("Анимация")]
-    [SerializeField] private Animator animator;
-    [SerializeField] private int attackLayer = 1;
-    [Tooltip("Точные названия состояний (States) в окне Animator")]
-    [SerializeField] private string[] attackAnimations = { "Atack", "Atack2", "Atack3" };
-    [Tooltip("Не повторять одну и ту же анимацию дважды подряд")]
-    [SerializeField] private bool preventRepeatAnimations = true;
+    public event System.Action OnAttackStarted;
 
     private bool isAttacking;
-    private int lastAttackIndex = -1;
 
     [Header("Настройки атаки")]
     [SerializeField] private Transform rayOrigin;
@@ -43,11 +36,13 @@ public class AttackController : MonoBehaviour
     [SerializeField] private int rayCount = 5;
     [SerializeField] private float spreadAngle = 45f;
 
+
+
+
     private readonly HashSet<EnemyStats> hitEnemies = new HashSet<EnemyStats>();
 
     private void Update()
     {
-        // Если игрок мертв — не реагируем на клик атаки
         if (playerStats != null && playerStats.isDead)
             return;
 
@@ -90,25 +85,18 @@ public class AttackController : MonoBehaviour
 
     private void Attack()
     {
-        // Блокируем атаку (в том числе по мобильной кнопке), если игрок мертв
         if (playerStats != null && playerStats.isDead)
             return;
 
         if (isAttacking)
             return;
 
-        if (animator == null || rayOrigin == null || attackAnimations == null || attackAnimations.Length == 0)
+        if (rayOrigin == null)
             return;
 
         isAttacking = true;
+        OnAttackStarted?.Invoke();
 
-        int randomIndex = GetRandomAttackIndex();
-        lastAttackIndex = randomIndex;
-        string chosenAnimation = attackAnimations[randomIndex];
-
-        animator.Play(chosenAnimation, attackLayer, 0f);
-
-        // Играем звук взмаха (AtackPlayer) в позиции игрока
         if (attackSwingSound != null)
         {
             attackSwingSound.Play(transform.position);
@@ -116,21 +104,6 @@ public class AttackController : MonoBehaviour
 
         StartCoroutine(AttackWithDelay());
         StartCoroutine(ResetAttackRoutine());
-    }
-
-    private int GetRandomAttackIndex()
-    {
-        if (attackAnimations.Length == 1)
-            return 0;
-
-        int index = Random.Range(0, attackAnimations.Length);
-
-        if (preventRepeatAnimations && index == lastAttackIndex)
-        {
-            index = (index + 1) % attackAnimations.Length;
-        }
-
-        return index;
     }
 
     private IEnumerator ResetAttackRoutine()
@@ -143,7 +116,6 @@ public class AttackController : MonoBehaviour
     {
         yield return new WaitForSeconds(damageDelay);
 
-        // Если игрока убили прямо во время его замаха — отменяем нанесение урона
         if (playerStats != null && playerStats.isDead)
             yield break;
 
@@ -175,7 +147,6 @@ public class AttackController : MonoBehaviour
                         playerStats.AddExpToPlayer();
                     }
 
-                    // Играем звук попадания (PlayerTakeHit) прямо в точке контакта с врагом!
                     if (attackHitSound != null)
                     {
                         attackHitSound.Play(hit.point);

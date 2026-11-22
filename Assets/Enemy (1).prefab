@@ -1631,6 +1631,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 300
   currentHealth: 300
+  isDead: 0
   healthBarObject: {fileID: 4206386479623931298}
   healthFillImage: {fileID: 8102934345394228237}
   healthText: {fileID: 1465583341696365312}
