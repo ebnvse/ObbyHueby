@@ -15,7 +15,7 @@ public class RewarBuf : MonoBehaviour
 
 			// По желанию, воспользуйтесь ID вознаграждения
 			if (rewardID == "UpSpeedSharpening")
-				sharpening.sharpenDuration = 1.3f;
+				sharpening.sharpenDuration = 0.5f;
         });
     }
 }

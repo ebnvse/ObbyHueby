@@ -5,18 +5,15 @@ using System.Collections;
 
 public class Sharpening : MonoBehaviour
 {
-    [Header("Ссылки")]
+    [Header("Ссылки на системы")]
     public PlayerStats playerStats;
     public Money money;
-    public TextMeshProUGUI currentUpgrade_Text;
     public UISoundPlayer uISoundPlayer;
 
-
-    [Header("UI процесса заточки")]
+    [Header("UI элементы")]
+    public TextMeshProUGUI currentUpgrade_Text;
     [Tooltip("Image с типом Filled (Horizontal / Radial), который заполняется от 0 до 1")]
     public Image progressFillImage;
-    [Tooltip("Время заполнения полоски заточки в секундах")]
-    public float sharpenDuration = 1f;
     [Tooltip("Кнопка запуска заточки")]
     public Button sharpenButton;
     [Tooltip("Кнопка отмены заточки (всегда видна на экране)")]
@@ -24,26 +21,24 @@ public class Sharpening : MonoBehaviour
     public GameObject SeccsesSharpening_UiEffect;
     public GameObject FailedSharpening_UiEffect;
 
-
-    private Coroutine sharpenCoroutine;
-    private bool isSharpening = false;
-
     [Header("Настройки заточки")]
+    [Tooltip("Время заполнения полоски заточки в секундах")]
+    public float sharpenDuration = 1f;
+    [Tooltip("Микро-задержка перед следующей заточкой (защита от случайного двойного клика)")]
+    public float postSharpenCooldown = 0.15f;
     public int currentUpgrade = 0;
     public int maxUpgrade = 16;   
     public int safeUpgrade = 3;    
     public int bonusPerLevel = 2;
     public int upgradeCost = 5;
 
-    // Лайтовые шансы для уровней от +0 -> +1 до +15 -> +16
-    private int[] upgradeChances = { 100, 100, 100, 95, 92, 90, 88, 85, 82, 80, 77, 75, 72, 70, 68, 65 };
+    // Шансы для уровней от +0 -> +1 до +15 -> +16
+    private readonly int[] upgradeChances = { 100, 100, 100, 95, 92, 90, 88, 85, 82, 80, 77, 75, 72, 70, 68, 65 };
 
-    [Header("Свечение меча и аура (как в L2)")]
-    public int materialIndex = 1;
-    public Renderer weaponRenderer;       // MeshRenderer самого меча
-    public Renderer bladeAuraRenderer;    // Перетащи сюда Quad "BladeAura"
+    [Header("Свечение меча (как в L2)")]
+    public Renderer bladeAuraRenderer;
     [Range(0.1f, 1f)]
-    public float auraAlpha = 0.85f;       // Прозрачность ореола вокруг лезвия
+    public float auraAlpha = 0.85f;
 
     [Tooltip("Цвета для уровней от +0 до +16 (всего 17 элементов)")]
     [ColorUsage(true, true)]
@@ -56,8 +51,37 @@ public class Sharpening : MonoBehaviour
         new Color(1f, 0.2f, 0.8f) // +16
     };
 
+    // Внутренние состояния и кэш
+    private Coroutine sharpenCoroutine;
+    private Coroutine successEffectCoroutine;
+    private Coroutine failedEffectCoroutine;
+    private bool isSharpening = false;
+    private int totalAddedDamage = 0; // Точный трекер добавленного урона
+
+    private Material cachedAuraMat;
+    private WaitForSeconds waitSuccessEffect;
+    private WaitForSeconds waitFailedEffect;
+    private WaitForSeconds waitCooldown;
+
+    private void Awake()
+    {
+        // Кэшируем задержки для корутин (0 мусора для сборщика мусора)
+        waitSuccessEffect = new WaitForSeconds(0.4f);
+        waitFailedEffect = new WaitForSeconds(0.5f);
+        waitCooldown = new WaitForSeconds(postSharpenCooldown);
+
+        if (bladeAuraRenderer != null)
+        {
+            cachedAuraMat = bladeAuraRenderer.material;
+        }
+    }
+
     private void Start()
     {
+        // На случай, если в инспекторе уже выставлен уровень > 0 при старте игры
+        totalAddedDamage = currentUpgrade * bonusPerLevel;
+
+        HideAllEffects();
         ResetProgressUI();
         UpdateUI();
         UpdateWeaponGlow();
@@ -66,28 +90,37 @@ public class Sharpening : MonoBehaviour
     // Вешаем этот метод на OnClick кнопки "Точить"
     public void StartSharpening()
     {
-        if (isSharpening)
+        // Мгновенная блокировка повторных вызовов в этом же кадре
+        if (isSharpening || sharpenCoroutine != null)
             return;
 
         if (currentUpgrade >= maxUpgrade)
         {
-            Debug.Log($"Оружие уже достигло максимальной заточки (+{maxUpgrade})!");
+            LogDebug($"Оружие уже достигло максимальной заточки (+{maxUpgrade})!");
+            return;
+        }
+
+        if (money == null)
+        {
+            Debug.LogError("[Sharpening] Не назначен компонент Money!");
             return;
         }
 
         if (money.current_money < upgradeCost)
         {
-            Debug.Log("Недостаточно денег для заточки!");
+            LogDebug("Недостаточно денег для заточки!");
             return;
         }
 
+        isSharpening = true;
+        UpdateButtonsState();
         sharpenCoroutine = StartCoroutine(SharpenRoutine());
     }
 
     // Вешаем этот метод на OnClick кнопки "Отмена"
     public void CancelSharpening()
     {
-        if (!isSharpening)
+        if (!isSharpening && sharpenCoroutine == null)
             return;
 
         if (sharpenCoroutine != null)
@@ -97,15 +130,11 @@ public class Sharpening : MonoBehaviour
         }
 
         ResetProgressUI();
-        Debug.Log("Заточка отменена игроком.");
+        LogDebug("Заточка отменена игроком.");
     }
 
     private IEnumerator SharpenRoutine()
     {
-        isSharpening = true;
-
-        if (sharpenButton != null) sharpenButton.interactable = false;
-
         float elapsed = 0f;
 
         if (progressFillImage != null)
@@ -113,14 +142,18 @@ public class Sharpening : MonoBehaviour
             progressFillImage.fillAmount = 0f;
         }
 
-        while (elapsed < sharpenDuration)
+        // Защита от деления на ноль, если sharpenDuration <= 0
+        if (sharpenDuration > 0f)
         {
-            elapsed += Time.deltaTime;
-            if (progressFillImage != null)
+            while (elapsed < sharpenDuration)
             {
-                progressFillImage.fillAmount = Mathf.Clamp01(elapsed / sharpenDuration);
+                elapsed += Time.deltaTime;
+                if (progressFillImage != null)
+                {
+                    progressFillImage.fillAmount = Mathf.Clamp01(elapsed / sharpenDuration);
+                }
+                yield return null;
             }
-            yield return null;
         }
 
         if (progressFillImage != null)
@@ -129,75 +162,149 @@ public class Sharpening : MonoBehaviour
         }
 
         ExecuteSharpening();
-        playerStats.UpdatePlayerStatsUI();
+
+        if (playerStats != null)
+        {
+            playerStats.UpdatePlayerStatsUI();
+        }
+
+        // Небольшая пауза перед разблокировкой кнопки, чтобы погасить спам-клики
+        if (postSharpenCooldown > 0f)
+        {
+            yield return waitCooldown;
+        }
+
         ResetProgressUI();
     }
-    public IEnumerator OffEffectSharpAnim()
-    {
-        yield return new WaitForSeconds(0.4f);
-        SeccsesSharpening_UiEffect.SetActive(false);
 
-    }
-    public IEnumerator OffFailedEffectSharpAnim()
-    {
-        yield return new WaitForSeconds(0.5f);
-        FailedSharpening_UiEffect.SetActive(false);
-
-    }
     private void ExecuteSharpening()
     {
-        
-        if (currentUpgrade >= maxUpgrade)
+        if (currentUpgrade >= maxUpgrade || money == null)
             return;
 
-        if (money.current_money >= upgradeCost)
+        if (money.current_money < upgradeCost)
         {
-            money.current_money -= upgradeCost;
+            LogDebug("Недостаточно денег для заточки!");
+            return;
+        }
+
+        // Списываем валюту
+        money.current_money -= upgradeCost;
+
+        int chanceIndex = Mathf.Clamp(currentUpgrade, 0, upgradeChances.Length - 1);
+        int chance = upgradeChances[chanceIndex];
+        int roll = Random.Range(1, 101);
+
+        if (roll <= chance)
+        {
+            // --- УСПЕХ ---
+            currentUpgrade++;
             
-
-            int chanceIndex = Mathf.Clamp(currentUpgrade, 0, upgradeChances.Length - 1);
-            int chance = upgradeChances[chanceIndex];
-            int roll = Random.Range(1, 101);
-
-            if (roll <= chance)
+            if (playerStats != null)
             {
-                // УСПЕХ
-                currentUpgrade++;
-                SeccsesSharpening_UiEffect.SetActive(true);
-                uISoundPlayer.PlaySeccsedSharpeningSounds();
-                StartCoroutine(OffEffectSharpAnim());
-                UpdateWeaponGlow();
                 playerStats.AtkDmg_Player += bonusPerLevel;
-                UpdateUI();
-                Debug.Log($"Успех! Оружие заточено на +{currentUpgrade}. Ваш урон: {playerStats.AtkDmg_Player}");
-                
+                totalAddedDamage += bonusPerLevel;
             }
-            else
-            {
-                // НЕУДАЧА
-                if (currentUpgrade < safeUpgrade)
-                {
-                    Debug.Log($"Неудача, но заточка безопасная! Уровень остался +{currentUpgrade}.");
-                    FailedSharpening_UiEffect.SetActive(true);
-                    StartCoroutine(OffFailedEffectSharpAnim());
-                }
-                else
-                {
-                    FailedSharpening_UiEffect.SetActive(true);
-                    StartCoroutine(OffFailedEffectSharpAnim());
-                    uISoundPlayer.PlayFailedSharpeningSounds();
-                    playerStats.AtkDmg_Player -= currentUpgrade * bonusPerLevel;
-                    currentUpgrade = 0;
-                    UpdateWeaponGlow();
-                    UpdateUI();
-                    Debug.Log($"Провал! Заточка слетела до +0. Ваш урон: {playerStats.AtkDmg_Player}");
-                }
-            }
+
+            TriggerSuccessEffect();
+            if (uISoundPlayer != null) uISoundPlayer.PlaySeccsedSharpeningSounds();
+            
+            UpdateWeaponGlow();
+            UpdateUI();
+            LogDebug($"Успех! Оружие заточено на +{currentUpgrade}.");
         }
         else
         {
-            Debug.Log("Недостаточно денег для заточки!");
+            // --- НЕУДАЧА ---
+            TriggerFailedEffect();
+            if (uISoundPlayer != null) uISoundPlayer.PlayFailedSharpeningSounds();
+
+            if (currentUpgrade < safeUpgrade)
+            {
+                LogDebug($"Неудача, но заточка безопасная! Уровень остался +{currentUpgrade}.");
+            }
+            else
+            {
+                if (playerStats != null)
+                {
+                    playerStats.AtkDmg_Player -= totalAddedDamage;
+                    totalAddedDamage = 0;
+                }
+
+                currentUpgrade = 0;
+                UpdateWeaponGlow();
+                UpdateUI();
+                LogDebug("Провал! Заточка слетела до +0.");
+            }
         }
+    }
+
+    private void TriggerSuccessEffect()
+    {
+        if (SeccsesSharpening_UiEffect == null) return;
+
+        // Выключаем эффект провала, если он ещё горел от прошлой попытки
+        if (FailedSharpening_UiEffect != null) FailedSharpening_UiEffect.SetActive(false);
+
+        if (successEffectCoroutine != null)
+        {
+            StopCoroutine(successEffectCoroutine);
+        }
+
+        SeccsesSharpening_UiEffect.SetActive(true);
+        successEffectCoroutine = StartCoroutine(OffEffectSharpAnim());
+    }
+
+    private void TriggerFailedEffect()
+    {
+        if (FailedSharpening_UiEffect == null) return;
+
+        // Выключаем эффект успеха, если он ещё горел от прошлой попытки
+        if (SeccsesSharpening_UiEffect != null) SeccsesSharpening_UiEffect.SetActive(false);
+
+        if (failedEffectCoroutine != null)
+        {
+            StopCoroutine(failedEffectCoroutine);
+        }
+
+        FailedSharpening_UiEffect.SetActive(true);
+        failedEffectCoroutine = StartCoroutine(OffFailedEffectSharpAnim());
+    }
+
+    private IEnumerator OffEffectSharpAnim()
+    {
+        yield return waitSuccessEffect;
+        if (SeccsesSharpening_UiEffect != null)
+        {
+            SeccsesSharpening_UiEffect.SetActive(false);
+        }
+        successEffectCoroutine = null;
+    }
+
+    private IEnumerator OffFailedEffectSharpAnim()
+    {
+        yield return waitFailedEffect;
+        if (FailedSharpening_UiEffect != null)
+        {
+            FailedSharpening_UiEffect.SetActive(false);
+        }
+        failedEffectCoroutine = null;
+    }
+
+    private void HideAllEffects()
+    {
+        if (successEffectCoroutine != null)
+        {
+            StopCoroutine(successEffectCoroutine);
+            successEffectCoroutine = null;
+        }
+        if (failedEffectCoroutine != null)
+        {
+            StopCoroutine(failedEffectCoroutine);
+            failedEffectCoroutine = null;
+        }
+        if (SeccsesSharpening_UiEffect != null) SeccsesSharpening_UiEffect.SetActive(false);
+        if (FailedSharpening_UiEffect != null) FailedSharpening_UiEffect.SetActive(false);
     }
 
     private void ResetProgressUI()
@@ -210,9 +317,19 @@ public class Sharpening : MonoBehaviour
             progressFillImage.fillAmount = 0f;
         }
 
+        UpdateButtonsState();
+    }
+
+    private void UpdateButtonsState()
+    {
         if (sharpenButton != null)
         {
-            sharpenButton.interactable = currentUpgrade < maxUpgrade;
+            sharpenButton.interactable = !isSharpening && (currentUpgrade < maxUpgrade);
+        }
+
+        if (cancelButton != null)
+        {
+            cancelButton.interactable = isSharpening;
         }
     }
 
@@ -220,22 +337,10 @@ public class Sharpening : MonoBehaviour
     {
         if (currentUpgrade_Text != null)
         {
-            if (currentUpgrade >= maxUpgrade)
-            {
-                currentUpgrade_Text.text = $"+{currentUpgrade}";
-            }
-            else
-            {
-                int chanceIndex = Mathf.Clamp(currentUpgrade, 0, upgradeChances.Length - 1);
-                int nextChance = upgradeChances[chanceIndex];
-                currentUpgrade_Text.text = $"+{currentUpgrade}";
-            }
+            currentUpgrade_Text.text = $"+{currentUpgrade}";
         }
 
-        if (sharpenButton != null && !isSharpening)
-        {
-            sharpenButton.interactable = currentUpgrade < maxUpgrade;
-        }
+        UpdateButtonsState();
     }
 
     private void UpdateWeaponGlow()
@@ -249,30 +354,11 @@ public class Sharpening : MonoBehaviour
 
         bool shouldGlow = currentUpgrade >= 4 && targetColor.maxColorComponent > 0.001f;
 
-        if (weaponRenderer != null)
-        {
-            Material[] mats = weaponRenderer.materials;
-            if (materialIndex >= 0 && materialIndex < mats.Length)
-            {
-                Material mat = mats[materialIndex];
-                if (shouldGlow)
-                {
-                    mat.EnableKeyword("_EMISSION");
-                    mat.SetColor("_EmissionColor", targetColor);
-                }
-                else
-                {
-                    mat.SetColor("_EmissionColor", Color.black);
-                    mat.DisableKeyword("_EMISSION");
-                }
-            }
-        }
-
         if (bladeAuraRenderer != null)
         {
             bladeAuraRenderer.gameObject.SetActive(shouldGlow);
 
-            if (shouldGlow)
+            if (shouldGlow && cachedAuraMat != null)
             {
                 Color auraColor = new Color(
                     Mathf.Clamp01(targetColor.r),
@@ -281,14 +367,13 @@ public class Sharpening : MonoBehaviour
                     auraAlpha
                 );
 
-                Material auraMat = bladeAuraRenderer.material;
-                if (auraMat.HasProperty("_TintColor"))
+                if (cachedAuraMat.HasProperty("_TintColor"))
                 {
-                    auraMat.SetColor("_TintColor", auraColor);
+                    cachedAuraMat.SetColor("_TintColor", auraColor);
                 }
                 else
                 {
-                    auraMat.color = auraColor;
+                    cachedAuraMat.color = auraColor;
                 }
             }
         }
@@ -296,9 +381,27 @@ public class Sharpening : MonoBehaviour
 
     private void OnDisable()
     {
-        if (isSharpening)
+        // При закрытии окна сбрасываем и заточку, и зависшие UI-эффекты
+        if (isSharpening || sharpenCoroutine != null)
         {
             CancelSharpening();
         }
+        HideAllEffects();
+    }
+
+    private void OnDestroy()
+    {
+        if (cachedAuraMat != null)
+        {
+            Destroy(cachedAuraMat);
+        }
+    }
+
+    // Логи будут работать только в редакторе Unity и не замедлят финальный билд
+    private void LogDebug(string message)
+    {
+#if UNITY_EDITOR
+        Debug.Log(message);
+#endif
     }
 }
