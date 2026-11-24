@@ -122,6 +122,7 @@ public class ThirdPersonCamera : MonoBehaviour
             {
                 float targetYaw = Quaternion.LookRotation(dirToEnemy).eulerAngles.y;
                 yaw = Mathf.LerpAngle(yaw, targetYaw, Time.deltaTime * lockOnEnterSpeed);
+                
             }
 
             pitch = Mathf.LerpAngle(pitch, lockOnPitch, Time.deltaTime * lockOnEnterSpeed);

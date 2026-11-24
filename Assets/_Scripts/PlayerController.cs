@@ -40,7 +40,7 @@ public class PlayerController : MonoBehaviour
     private float jumpBufferCounter;
     private float coyoteTimeCounter;
 
-    [Header("Animator")]
+    [Header("Animator Properties")]
     public bool IsMoving => Mathf.Abs(horizontal) > 0.05f || Mathf.Abs(vertical) > 0.05f;
     public bool IsRunning => isRunning;
     public bool IsGrounded => isGrounded;
@@ -48,14 +48,13 @@ public class PlayerController : MonoBehaviour
     public float InputHorizontal => horizontal;
     public float InputVertical => vertical;
 
-
     private CharacterController controller;
     private Vector3 velocity;
     private Vector3 currentMoveDirection;
 
     private float horizontal;
     private float vertical;
-    private bool isRunning;
+    public bool isRunning;
 
     [Header("Rotation Settings")]
     public float rotationOffset = 180f;
@@ -76,11 +75,22 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         controller = GetComponent<CharacterController>();
+
+        // При старте включаем режим бега по умолчанию
+        isRunningBittonWasPressed = true;
+        isRunning = true;
     }
 
     public void MobileChangeMoveState()
     {
+        if (currentTarget != null) return;
         isRunningBittonWasPressed = !isRunningBittonWasPressed;
+    }
+
+    public void ClickMobileButtonJump()
+    {
+        if (currentTarget != null) return;
+        JumpBittonWasPressed = true;
     }
 
     void Update()
@@ -98,7 +108,18 @@ public class PlayerController : MonoBehaviour
         float keyboardHorizontal = 0;
         float keyboardVertical = 0;
 
-        isRunning = false;
+        bool hasTarget = currentTarget != null;
+
+        if (hasTarget)
+        {
+            // В бою принудительно переводим на шаг, но запоминаем "бег" для выхода из боя
+            isRunning = false;
+            isRunningBittonWasPressed = true;
+        }
+        else
+        {
+            isRunning = isRunningBittonWasPressed;
+        }
 
         if (Keyboard.current != null)
         {
@@ -106,8 +127,6 @@ public class PlayerController : MonoBehaviour
             if (Keyboard.current.dKey.isPressed) keyboardHorizontal = 1;
             if (Keyboard.current.wKey.isPressed) keyboardVertical = 1;
             if (Keyboard.current.sKey.isPressed) keyboardVertical = -1;
-
-            isRunning = isRunningBittonWasPressed || Keyboard.current.leftShiftKey.isPressed;
         }
 
         float joystickHorizontal = 0;
@@ -230,11 +249,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    public void ClickMobileButtonJump()
-    {
-        JumpBittonWasPressed = true;
-    }
-
     void HandleJumpAndGravity()
     {
         Vector3 capsuleCenter = transform.position + controller.center;
@@ -313,15 +327,14 @@ public class PlayerController : MonoBehaviour
             stepTimer = 0f;
             return;
         }
-
         float currentInterval = isRunning ? runStepInterval : walkStepInterval;
         stepTimer -= Time.deltaTime;
-
         if (stepTimer <= 0f)
         {
             float stepVolume = isRunning ? 0.9f : 0.6f;
             footstepSound.Play(transform.position, stepVolume);
             stepTimer = currentInterval;
         }
-    }
 }
+}
+

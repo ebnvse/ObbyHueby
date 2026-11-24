@@ -785,7 +785,7 @@ Animator:
   m_GameObject: {fileID: 1519412983581947912}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 4f1a8e71bcef9144abd8f7b765e9a41e, type: 2}
+  m_Controller: {fileID: 9100000, guid: a6701c9053f948c4ba848299554f93c5, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -869,6 +869,7 @@ GameObject:
   - component: {fileID: 1157420890371801981}
   - component: {fileID: 1740386299921155826}
   - component: {fileID: 414481990840030018}
+  - component: {fileID: 1968056436207377859}
   m_Layer: 8
   m_Name: Enemy_Level 1 - 5
   m_TagString: Untagged
@@ -1091,8 +1092,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   EnemyLevel: 1
-  maxHealth: 100
-  currentHealth: 100
+  maxHealth: 300
+  currentHealth: 300
   isDead: 0
   healthBarObject: {fileID: 2689657382537904329}
   healthFillImage: {fileID: 7736559659609076906}
@@ -1158,14 +1159,28 @@ MonoBehaviour:
   patrolSpeed: 4
   chaseSpeed: 8
   rotationSpeed: 15
+--- !u!114 &1968056436207377859
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1928221705360447491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 490ad67a0d15e574694d86e1bff3617a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
   animator: {fileID: 7537254904227234949}
-  walkBoolName: isWalk
-  runBoolName: isRun
+  idleStateName: EnemyIdle
+  walkStateName: EnemyWalk
+  runStateName: EnemyRun
+  crossFadeDuration: 0.15
   attackStateNames:
   - EnemyAtack
   - EnemyAtack2
   attackLayerIndex: 0
-  hitStateName: GetHit
+  hitStateName: EnemyGetHit
   hitLayerIndex: 1
 --- !u!1 &2100944616273381229
 GameObject:

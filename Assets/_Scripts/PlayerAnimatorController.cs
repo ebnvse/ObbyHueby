@@ -6,6 +6,7 @@ public class PlayerAnimatorController : MonoBehaviour
     public Animator animator;
     public PlayerController playerController;
     public AttackController attackController;
+    public ParryController parryController;
     public PlayerStats playerStats;
 
     [Header("Настройки атаки")]
@@ -14,6 +15,12 @@ public class PlayerAnimatorController : MonoBehaviour
     public float blendSpeed = 10f;
     [Tooltip("Максимальный множитель скорости анимации удара (чтобы на 10 уровне перс не махал слишком дёргано)")]
     public float maxAnimSpeedMultiplier = 4f;
+
+    [Header("Настройки парирования")]
+    [Tooltip("Название стейта анимации поднятия руки в Animator")]
+    public string parryStateName = "parry";
+    [Tooltip("Слой аниматора для парирования (можно использовать 1-й слой верхнего тела)")]
+    public int parryLayerIndex = 1;
 
     // Слой 0: Движение, прыжок, таргет-лок и смерть
     private readonly int IdleHash = Animator.StringToHash("Idle");
@@ -31,10 +38,12 @@ public class PlayerAnimatorController : MonoBehaviour
     // Параметр скорости атаки в окне Animator
     private readonly int AttackSpeedParamHash = Animator.StringToHash("AttackSpeed");
 
+    private int parryHash;
     private int currentBaseAnim;
 
-    // Слой 1: Атака (Верх тела)
+    // Слой 1: Атака и Парирование (Верх тела)
     private bool isPlayingAttack;
+    private bool wasParrying;
     private string currentAttackName;
     private int lastAttackIndex = -1;
     private float upperLayerWeight;
@@ -50,8 +59,13 @@ public class PlayerAnimatorController : MonoBehaviour
         if (attackController == null)
             attackController = GetComponentInChildren<AttackController>();
 
+        if (parryController == null)
+            parryController = GetComponentInChildren<ParryController>();
+
         if (playerStats == null)
             playerStats = GetComponent<PlayerStats>();
+
+        parryHash = Animator.StringToHash(parryStateName);
     }
 
     private void OnEnable()
@@ -75,13 +89,14 @@ public class PlayerAnimatorController : MonoBehaviour
         {
             PlayBaseAnimation(DeathHash, 0.15f);
             isPlayingAttack = false;
+            wasParrying = false;
             upperLayerWeight = Mathf.MoveTowards(upperLayerWeight, 0f, blendSpeed * Time.deltaTime);
             animator.SetLayerWeight(1, upperLayerWeight);
             return;
         }
 
         UpdateBaseMovement();
-        UpdateUpperBodyAttack();
+        UpdateUpperBodyActions();
     }
 
     private void UpdateBaseMovement()
@@ -149,6 +164,10 @@ public class PlayerAnimatorController : MonoBehaviour
         if (playerStats != null && playerStats.isDead)
             return;
 
+        // Не атакуем, если игрок сейчас держит блок/парирование
+        if (parryController != null && parryController.IsParrying)
+            return;
+
         float speedMult = 1f;
         if (playerStats != null)
         {
@@ -169,9 +188,21 @@ public class PlayerAnimatorController : MonoBehaviour
         animator.Play(currentAttackName, 1, 0f);
     }
 
-    private void UpdateUpperBodyAttack()
+    private void UpdateUpperBodyActions()
     {
-        if (isPlayingAttack)
+        bool isParrying = parryController != null && parryController.IsParrying;
+
+        if (isParrying)
+        {
+            // Парирование прерывает текущую атаку
+            isPlayingAttack = false;
+
+            if (!wasParrying)
+            {
+                animator.CrossFadeInFixedTime(parryHash, 0.1f, parryLayerIndex, 0f);
+            }
+        }
+        else if (isPlayingAttack)
         {
             AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(1);
             if (state.IsName(currentAttackName) && state.normalizedTime >= 0.8f)
@@ -180,9 +211,14 @@ public class PlayerAnimatorController : MonoBehaviour
             }
         }
 
-        float currentSpeedMult = playerStats != null ? Mathf.Clamp(playerStats.AtkSpped_Player, 1f, maxAnimSpeedMultiplier) : 1f;
-        float targetWeight = isPlayingAttack ? 1f : 0f;
+        wasParrying = isParrying;
+
+        float currentSpeedMult = (!isParrying && playerStats != null)
+            ? Mathf.Clamp(playerStats.AtkSpped_Player, 1f, maxAnimSpeedMultiplier)
+            : 1f;
+
+        float targetWeight = (isPlayingAttack || isParrying) ? 1f : 0f;
         upperLayerWeight = Mathf.MoveTowards(upperLayerWeight, targetWeight, (blendSpeed * currentSpeedMult) * Time.deltaTime);
-        animator.SetLayerWeight(1, upperLayerWeight);
+        animator.SetLayerWeight(parryLayerIndex, upperLayerWeight);
     }
 }

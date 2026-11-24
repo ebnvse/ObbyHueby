@@ -13,6 +13,7 @@ public class PlayerStats : MonoBehaviour
     public TreeTalent treeTalent;
     public PlayerController playerController;
     public AttackController attackController;
+    public ParryController parryController;
     
     [Header("Критический урон")]
     public float Critical_Chance_multiplier = 1.5f; // Множитель должен быть > 1 (например, 1.5 = +50% урона)
@@ -149,6 +150,12 @@ public class PlayerStats : MonoBehaviour
     public void TakeDamage(int damage)
     {
         if (isDead || currentHealth <= 0) return;
+
+        if(parryController.IsParrying)
+        {
+            parryController.PlayParrySound();
+            return;
+        }
 
         currentHealth -= damage;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);

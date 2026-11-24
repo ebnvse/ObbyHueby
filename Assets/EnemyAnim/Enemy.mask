@@ -16,13 +16,13 @@ AvatarMask:
   - m_Path: Armature/Bone
     m_Weight: 1
   - m_Path: Armature/Bone/Bone.002
-    m_Weight: 0
+    m_Weight: 1
   - m_Path: Armature/Bone/Bone.002/Bone.002_end
     m_Weight: 1
   - m_Path: Armature/Bone/Bone.002/Noob3
     m_Weight: 1
   - m_Path: Armature/Bone/Bone.003
-    m_Weight: 0
+    m_Weight: 1
   - m_Path: Armature/Bone/Bone.003/Bone.003_end
     m_Weight: 1
   - m_Path: Armature/Bone/Bone.003/Noob2

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
-using JetBrains.Annotations;
+using System;
 
 [RequireComponent(typeof(NavMeshAgent))]
 public class Enemy : MonoBehaviour
@@ -43,23 +43,16 @@ public class Enemy : MonoBehaviour
     public float chaseSpeed = 5f;
     public float rotationSpeed = 6f;
 
-    [Header("Анимации")]
-    public Animator animator;
-    public string walkBoolName = "isWalk";
-    public string runBoolName = "isRun";
-
-    [Tooltip("Точные названия стейтов анимаций атаки в Animator")]
-    public string[] attackStateNames = { "EnemyAtack", "EnemyAtack2" };
-    [Tooltip("Слой для анимации атаки (0 - основной, 1 - верхний)")]
-    public int attackLayerIndex = 0;
-
-    [Tooltip("Название стейта анимации получения урона")]
-    public string hitStateName = "EnemyGetHit";
-    public int hitLayerIndex = 1;
+    // --- Свойства и события для EnemyAnimator ---
+    public bool IsWalking { get; private set; }
+    public bool IsRunning { get; private set; }
+    
+    public event Action OnAttackTriggered;
+    public event Action OnHitTriggered;
+    // --------------------------------------------
 
     private NavMeshAgent agent;
     private int currentPatrolIndex = -1;
-    private int lastAttackIndex = -1;
     private float waitTimer = 0f;
     private bool isProvoked = false;
 
@@ -69,9 +62,6 @@ public class Enemy : MonoBehaviour
 
         if (enemyStats == null)
             enemyStats = GetComponentInParent<EnemyStats>();
-
-        if (animator == null)
-            animator = GetComponentInChildren<Animator>();
 
         if (player == null)
         {
@@ -111,11 +101,10 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    private void SetAnimationState(bool isWalking, bool isRunning)
+    private void SetMovementState(bool walking, bool running)
     {
-        if (animator == null) return;
-        animator.SetBool(walkBoolName, isWalking);
-        animator.SetBool(runBoolName, isRunning);
+        IsWalking = walking;
+        IsRunning = running;
     }
 
     private bool ShouldChasePlayer(float distance)
@@ -156,7 +145,7 @@ public class Enemy : MonoBehaviour
             agent.SetDestination(player.position);
             LookAtPlayer();
             
-            SetAnimationState(false, true); // Run
+            SetMovementState(false, true); // Бег
         }
         else
         {
@@ -164,7 +153,7 @@ public class Enemy : MonoBehaviour
             agent.velocity = Vector3.zero;
             LookAtPlayer();
             
-            SetAnimationState(false, false); // Idle
+            SetMovementState(false, false); // Стоит на месте
             TryAttackPlayer();
         }
     }
@@ -181,17 +170,8 @@ public class Enemy : MonoBehaviour
 
             nextAttackTime = Time.time + actualCooldown;
 
-            if (animator != null && attackStateNames != null && attackStateNames.Length > 0)
-            {
-                int index = Random.Range(0, attackStateNames.Length);
-                if (attackStateNames.Length > 1 && index == lastAttackIndex)
-                {
-                    index = (index + 1) % attackStateNames.Length;
-                }
-                lastAttackIndex = index;
-
-                animator.Play(attackStateNames[index], attackLayerIndex, 0f);
-            }
+            // Сообщаем аниматору о начале атаки
+            OnAttackTriggered?.Invoke();
 
             StartCoroutine(DealDamageWithDelay());
         }
@@ -219,17 +199,14 @@ public class Enemy : MonoBehaviour
 
                 if (levelDifference >= 5)
                 {
-                    // Враг старше игрока на 5+ уровней -> бьет на 70% сильнее
                     finalDamage = Mathf.RoundToInt(finalDamage * 1.7f);
                 }
                 else if (levelDifference <= -10)
                 {
-                    // Игрок старше врага на 10+ уровней -> враг вообще не наносит урон
                     finalDamage = 0;
                 }
                 else if (levelDifference < 0)
                 {
-                    // Игрок старше на 1–9 уровней -> урон снижается на 3 за каждый уровень (минимум 1)
                     int levelsAboveEnemy = Mathf.Abs(levelDifference);
                     int damageReduction = levelsAboveEnemy * 3;
                     finalDamage = Mathf.Max(1, finalDamage - damageReduction);
@@ -240,7 +217,6 @@ public class Enemy : MonoBehaviour
             {
                 playerStats.TakeDamage(finalDamage);
 
-                // Если после этого удара игрок погиб — включаем объект на 5 секунд
                 if (playerStats.isDead && objectOnPlayerKill != null)
                 {
                     StartCoroutine(ActivateObjectTemporarily(objectOnPlayerKill, showObjectDuration));
@@ -265,7 +241,7 @@ public class Enemy : MonoBehaviour
         if (patrolPoints == null || patrolPoints.Length == 0)
         {
             agent.isStopped = true;
-            SetAnimationState(false, false);
+            SetMovementState(false, false);
             return;
         }
 
@@ -276,7 +252,7 @@ public class Enemy : MonoBehaviour
         {
             agent.isStopped = true;
             agent.velocity = Vector3.zero;
-            SetAnimationState(false, false);
+            SetMovementState(false, false);
 
             waitTimer += Time.deltaTime;
             if (waitTimer >= waitTimeAtPoint)
@@ -288,7 +264,7 @@ public class Enemy : MonoBehaviour
         else
         {
             agent.isStopped = false;
-            SetAnimationState(true, false);
+            SetMovementState(true, false);
         }
     }
 
@@ -303,7 +279,7 @@ public class Enemy : MonoBehaviour
             return;
         }
 
-        int nextIndex = Random.Range(0, patrolPoints.Length);
+        int nextIndex = UnityEngine.Random.Range(0, patrolPoints.Length);
 
         if (nextIndex == currentPatrolIndex)
         {
@@ -330,11 +306,9 @@ public class Enemy : MonoBehaviour
         if (playerStats != null && playerStats.isDead) return;
 
         isProvoked = true;
-
-        if (animator != null && !string.IsNullOrEmpty(hitStateName))
-        {
-            animator.Play(hitStateName, hitLayerIndex, 0f);
-        }
+        
+        // Сообщаем аниматору о получении урона
+        OnHitTriggered?.Invoke();
     }
 
     private void OnDrawGizmosSelected()

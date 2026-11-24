@@ -7,6 +7,7 @@ using System.Collections.Generic;
 public class AttackController : MonoBehaviour
 {
     public PlayerStats playerStats;
+    public ParryController parryController;
 
     [Header("Звуки")]
     [Tooltip("Звук взмаха при начале атаки (AtackPlayer)")]
@@ -82,6 +83,7 @@ public class AttackController : MonoBehaviour
 
     private void Attack()
     {
+        if(parryController.IsParrying) return;
         if (playerStats != null && playerStats.isDead)
             return;
 
@@ -145,6 +147,14 @@ public class AttackController : MonoBehaviour
                     );
 
                     enemyStats.TakeDamage(finalDamage);
+
+                    Enemy enemy = enemyStats.GetComponentInChildren<Enemy>();
+                    if (enemy == null) enemy = enemyStats.GetComponentInParent<Enemy>();
+
+                    if (enemy != null)
+                    {
+                        enemy.OnTakeDamage();
+                    }
 
                     if (enemyStats.isDead)
                     {

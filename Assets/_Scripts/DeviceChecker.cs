@@ -6,6 +6,7 @@ public class DeviceChecker : MonoBehaviour
 {
     public GameObject Canvas_Mobile_Input;
     public AttackController attackController;
+    public GameObject MainCanvasButtonDekstop;
     public void MyMethod() //пометочка из документации 
     {
         // deviceType может возвращать: desktop, mobile, tablet, tv
@@ -31,6 +32,7 @@ public class DeviceChecker : MonoBehaviour
                 Debug.Log("телефон");
                 Canvas_Mobile_Input.SetActive(true);
                 attackController.allowMouseClickAttack = false;
+                MainCanvasButtonDekstop.SetActive(false);
                 break;
             default:
                 Debug.Log("телефон");
