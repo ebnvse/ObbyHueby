@@ -6,7 +6,9 @@ public class DeviceChecker : MonoBehaviour
 {
     public GameObject Canvas_Mobile_Input;
     public AttackController attackController;
-    public GameObject MainCanvasButtonDekstop;
+    //public GameObject MainCanvasButtonDekstop;
+    public GameObject MainCanvasAbilDekstop;
+    public GameObject MainCanvasAbilMobile;
     public void MyMethod() //пометочка из документации 
     {
         // deviceType может возвращать: desktop, mobile, tablet, tv
@@ -26,18 +28,25 @@ public class DeviceChecker : MonoBehaviour
             case "desktop":
                 Debug.Log("Комп");
                 Canvas_Mobile_Input.SetActive(false);
+                MainCanvasAbilMobile.SetActive(false);
+                MainCanvasAbilDekstop.SetActive(true);
                 attackController.allowMouseClickAttack = true;
                 break;
             case "mobile":
                 Debug.Log("телефон");
                 Canvas_Mobile_Input.SetActive(true);
+                MainCanvasAbilMobile.SetActive(true);
+                MainCanvasAbilDekstop.SetActive(false);
                 attackController.allowMouseClickAttack = false;
-                MainCanvasButtonDekstop.SetActive(false);
+                //MainCanvasButtonDekstop.SetActive(false);
                 break;
             default:
                 Debug.Log("телефон");
                 Canvas_Mobile_Input.SetActive(true);
+                MainCanvasAbilMobile.SetActive(true);
+                MainCanvasAbilDekstop.SetActive(false);
                 attackController.allowMouseClickAttack = false;
+                //MainCanvasButtonDekstop.SetActive(false);
                 break;
         }    
     }

@@ -108,7 +108,7 @@ public class PlayerStats : MonoBehaviour
         attackController.attackCooldown = baseAttackCooldown / safeSpeed;
     }
 
-    public int CalculationAtackDamagePlayer(int Enemy_Def, int Player_AtackDamage, float critChanse, float critMultipler, int enemyLevel)
+    public int CalculationAtackDamagePlayer(int Enemy_Def, int Player_AtackDamage, float critChanse, float critMultipler, int enemyLevel, float damageMultiplier = 1f)
     {
         int levelDifference = currentLevelPlayer - enemyLevel;
 
@@ -141,6 +141,8 @@ public class PlayerStats : MonoBehaviour
         {
             finalDamage = Mathf.RoundToInt(finalDamage * 1.7f);
         }
+
+        finalDamage = Mathf.Max(1, Mathf.RoundToInt(finalDamage * damageMultiplier));
 
         ShowDamagePopup(finalDamage, isCrit);
 

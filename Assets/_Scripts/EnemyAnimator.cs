@@ -125,37 +125,28 @@ public class EnemyAnimator : MonoBehaviour
     {
         isAttacking = true;
 
-        // Запускаем выбранную атаку на Слою 1 с 0-й секунды
         animator.CrossFadeInFixedTime(attackHash, actionFadeDuration, attackLayer, 0f);
 
-        // 1. Ждём, пока аниматор гарантированно войдёт в стейт атаки (или начнёт переход в него)
         while (true)
         {
             AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(attackLayer);
-            AnimatorStateInfo next = animator.GetNextAnimatorStateInfo(attackLayer);
-
-            // Как только текущий стейт стал нашей атакой и переход закончился — выходим из ожидания старта
             if (current.shortNameHash == attackHash && !animator.IsInTransition(attackLayer))
                 break;
 
             yield return null;
         }
 
-        // 2. Теперь ждём, пока клип атаки доиграет до конца (normalizedTime >= 0.9f)
         while (true)
         {
             AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(attackLayer);
-            
             if (current.shortNameHash != attackHash || current.normalizedTime >= 0.9f)
                 break;
 
             yield return null;
         }
 
-        // 3. Плавно уводим слой атак обратно в Empty, чтобы он перестал влиять на скелет
         animator.CrossFadeInFixedTime(attackEmptyHash, actionFadeDuration, attackLayer, 0f);
 
-        // 4. Возвращаем базовый слой в EnemyIdle
         currentMovementHash = idleHash;
         animator.CrossFadeInFixedTime(idleHash, actionFadeDuration, movementLayer);
 
@@ -174,21 +165,25 @@ public class EnemyAnimator : MonoBehaviour
     {
         animator.CrossFadeInFixedTime(hitHash, actionFadeDuration, hitLayer, 0f);
 
-        while (true)
+        float safetyTimer = 0f;
+        while (safetyTimer < 0.5f)
         {
             AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(hitLayer);
             if (current.shortNameHash == hitHash && !animator.IsInTransition(hitLayer))
                 break;
 
+            safetyTimer += Time.deltaTime;
             yield return null;
         }
 
-        while (true)
+        safetyTimer = 0f;
+        while (safetyTimer < 1.5f)
         {
             AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(hitLayer);
             if (current.shortNameHash != hitHash || current.normalizedTime >= 0.9f)
                 break;
 
+            safetyTimer += Time.deltaTime;
             yield return null;
         }
 

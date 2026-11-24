@@ -31,6 +31,15 @@ public class ThirdPersonCamera : MonoBehaviour
     public float minVerticalAngle = -35f;
     public float maxVerticalAngle = 70f;
 
+    [Header("Gamepad Settings")]
+    [Tooltip("Скорость вращения камеры правым стиком (градусов в секунду)")]
+    public float gamepadSensitivity = 140f;
+    [Range(0.05f, 0.5f)]
+    [Tooltip("Мертвая зона правого стика")]
+    public float rightStickDeadzone = 0.15f;
+    [Tooltip("Инверсия оси Y на геймпаде")]
+    public bool invertGamepadY = false;
+
     [Header("Touch Controls")]
     [Range(0.1f, 0.9f)]
     public float touchAreaStart = 0.5f;
@@ -122,7 +131,6 @@ public class ThirdPersonCamera : MonoBehaviour
             {
                 float targetYaw = Quaternion.LookRotation(dirToEnemy).eulerAngles.y;
                 yaw = Mathf.LerpAngle(yaw, targetYaw, Time.deltaTime * lockOnEnterSpeed);
-                
             }
 
             pitch = Mathf.LerpAngle(pitch, lockOnPitch, Time.deltaTime * lockOnEnterSpeed);
@@ -134,6 +142,7 @@ public class ThirdPersonCamera : MonoBehaviour
         {
             HandleMouseRotation();
             HandleTouchRotation();
+            HandleGamepadRotation();
             HandleZoom();
         }
 
@@ -228,6 +237,22 @@ public class ThirdPersonCamera : MonoBehaviour
                 }
             }
         }
+    }
+
+    void HandleGamepadRotation()
+    {
+        if (Gamepad.current == null)
+            return;
+
+        Vector2 stick = Gamepad.current.rightStick.ReadValue();
+        if (stick.magnitude < rightStickDeadzone)
+            return;
+
+        float yInput = invertGamepadY ? -stick.y : stick.y;
+
+        yaw += stick.x * gamepadSensitivity * Time.deltaTime;
+        pitch -= yInput * gamepadSensitivity * Time.deltaTime;
+        pitch = Mathf.Clamp(pitch, minVerticalAngle, maxVerticalAngle);
     }
 
     void RotateCamera(Vector2 delta)

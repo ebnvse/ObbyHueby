@@ -134,17 +134,25 @@ public class Enemy : MonoBehaviour
         return false;
     }
 
-    private void ChasePlayer(float distance)
+        private void ChasePlayer(float distance)
     {
-        agent.speed = chaseSpeed;
-        agent.stoppingDistance = attackRange;
+        // Считаем дистанцию только по горизонтали (игнорируем разницу высоты Pivot-ов)
+        Vector3 flatEnemyPos = new Vector3(transform.position.x, 0f, transform.position.z);
+        Vector3 flatPlayerPos = new Vector3(player.position.x, 0f, player.position.z);
+        float flatDistance = Vector3.Distance(flatEnemyPos, flatPlayerPos);
 
-        if (distance > attackRange)
+        // Останавливаемся чуть ближе радиуса атаки (на 80% от attackRange), чтобы не зависать на границе
+        float stopDist = Mathf.Max(0.5f, attackRange * 0.8f);
+
+        agent.speed = chaseSpeed;
+        agent.stoppingDistance = stopDist;
+
+        if (flatDistance > stopDist)
         {
             agent.isStopped = false;
             agent.SetDestination(player.position);
             LookAtPlayer();
-            
+
             SetMovementState(false, true); // Бег
         }
         else
@@ -152,11 +160,12 @@ public class Enemy : MonoBehaviour
             agent.isStopped = true;
             agent.velocity = Vector3.zero;
             LookAtPlayer();
-            
+
             SetMovementState(false, false); // Стоит на месте
             TryAttackPlayer();
         }
     }
+
 
     private void TryAttackPlayer()
     {

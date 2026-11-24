@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.EventSystems;
 
 public class ParryController : MonoBehaviour
@@ -11,6 +12,10 @@ public class ParryController : MonoBehaviour
     [Header("Настройки ввода")]
     [Tooltip("Разрешить защиту зажатием правой кнопки мыши на ПК")]
     public bool allowRightMouseParry = true;
+    [Tooltip("Разрешить защиту с геймпада")]
+    public bool allowGamepadParry = true;
+    [Tooltip("Кнопка геймпада для блока/парирования (по умолчанию LeftShoulder / L1)")]
+    public GamepadButton gamepadParryButton = GamepadButton.LeftShoulder;
 
     [Header("Состояние (для проверки из других скриптов)")]
     [SerializeField] private bool isParrying;
@@ -46,9 +51,13 @@ public class ParryController : MonoBehaviour
                            Mouse.current.rightButton.isPressed && 
                            !IsPointerOverUI();
 
+        bool isGamepadHeld = allowGamepadParry && 
+                             Gamepad.current != null && 
+                             Gamepad.current[gamepadParryButton].isPressed;
+
         if (playerController != null && playerController.HasTarget)
         {
-            isParrying = isMouseHeld || isMobileButtonHeld;
+            isParrying = isMouseHeld || isGamepadHeld || isMobileButtonHeld;
         }
         else
         {

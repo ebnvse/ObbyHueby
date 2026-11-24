@@ -7,6 +7,10 @@ public class PlayerController : MonoBehaviour
     [Header("Camera")]
     public Transform cameraTransform;
 
+    [Header("Gamepad Settings")]
+    [Range(0.05f, 0.5f)]
+    public float stickDeadzone = 0.15f;
+
     [Header("Movement Settings")]
     public float walkSpeed = 2f;
     public float runSpeed = 6f;
@@ -107,8 +111,16 @@ public class PlayerController : MonoBehaviour
     {
         float keyboardHorizontal = 0;
         float keyboardVertical = 0;
+        float gamepadHorizontal = 0;
+        float gamepadVertical = 0;
 
         bool hasTarget = currentTarget != null;
+
+        // Переключение бега на геймпаде (нажатие на левый стик L3)
+        if (!hasTarget && Gamepad.current != null && Gamepad.current.leftStickButton.wasPressedThisFrame)
+        {
+            isRunningBittonWasPressed = !isRunningBittonWasPressed;
+        }
 
         if (hasTarget)
         {
@@ -121,6 +133,7 @@ public class PlayerController : MonoBehaviour
             isRunning = isRunningBittonWasPressed;
         }
 
+        // Клавиатура
         if (Keyboard.current != null)
         {
             if (Keyboard.current.aKey.isPressed) keyboardHorizontal = -1;
@@ -129,6 +142,18 @@ public class PlayerController : MonoBehaviour
             if (Keyboard.current.sKey.isPressed) keyboardVertical = -1;
         }
 
+        // Геймпад (левый стик с мертвой зоной)
+        if (Gamepad.current != null)
+        {
+            Vector2 stick = Gamepad.current.leftStick.ReadValue();
+            if (stick.magnitude >= stickDeadzone)
+            {
+                gamepadHorizontal = stick.x;
+                gamepadVertical = stick.y;
+            }
+        }
+
+        // Мобильный джойстик
         float joystickHorizontal = 0;
         float joystickVertical = 0;
 
@@ -138,8 +163,8 @@ public class PlayerController : MonoBehaviour
             joystickVertical = joystick.Vertical;
         }
 
-        horizontal = Mathf.Clamp(keyboardHorizontal + joystickHorizontal, -1f, 1f);
-        vertical = Mathf.Clamp(keyboardVertical + joystickVertical, -1f, 1f);
+        horizontal = Mathf.Clamp(keyboardHorizontal + gamepadHorizontal + joystickHorizontal, -1f, 1f);
+        vertical = Mathf.Clamp(keyboardVertical + gamepadVertical + joystickVertical, -1f, 1f);
 
         if (joystickHorizontal != 0 || joystickVertical != 0)
         {
@@ -280,7 +305,10 @@ public class PlayerController : MonoBehaviour
             coyoteTimeCounter -= Time.deltaTime;
         }
 
-        if ((Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame) || JumpBittonWasPressed)
+        bool keyboardJump = Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
+        bool gamepadJump = currentTarget == null && Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame;
+
+        if (keyboardJump || gamepadJump || JumpBittonWasPressed)
         {
             jumpBufferCounter = jumpBufferTime;
         }
@@ -335,6 +363,5 @@ public class PlayerController : MonoBehaviour
             footstepSound.Play(transform.position, stepVolume);
             stepTimer = currentInterval;
         }
+    }
 }
-}
-

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24d859667dd862949b26ecd80d7c36ce, type: 3}
+  m_Name: PlayerTake
+  m_EditorClassIdentifier: 
+  clips:
+  - {fileID: 8300000, guid: 695d870aa0c78e8488489b31b5671c41, type: 3}
+  - {fileID: 8300000, guid: 7c3c79c1da142074e8ec7c5cae0fbce5, type: 3}
+  - {fileID: 8300000, guid: 80e0b55d047885c4882f46c3ebc86a22, type: 3}
+  - {fileID: 8300000, guid: 78710ae2f8cc4514c83e0707eb5706bd, type: 3}
+  mixerGroup: {fileID: 0}
+  minVolume: 0.381
+  maxVolume: 0.371
+  minPitch: 0.95
+  maxPitch: 1.05
+  spatialBlend: 0
+  maxDistance: 25

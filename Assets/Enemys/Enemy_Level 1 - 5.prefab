@@ -1152,7 +1152,7 @@ MonoBehaviour:
   showObjectDuration: 5
   sightRange: 25
   loseTargetRange: 50
-  attackRange: 5
+  attackRange: 8
   waitTimeAtPoint: 2
   attackCooldown: 1.5
   damageDelay: 0.15
@@ -1172,16 +1172,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   animator: {fileID: 7537254904227234949}
-  idleStateName: EnemyIdle
-  walkStateName: EnemyWalk
-  runStateName: EnemyRun
-  crossFadeDuration: 0.15
-  attackStateNames:
+  movementFadeDuration: 0.15
+  actionFadeDuration: 0.1
+  movementLayer: 0
+  idleState: EnemyIdle
+  walkState: EnemyWalk
+  runState: EnemyRun
+  attackLayer: 1
+  attackEmptyState: Empty
+  attackStates:
   - EnemyAtack
   - EnemyAtack2
-  attackLayerIndex: 0
-  hitStateName: EnemyGetHit
-  hitLayerIndex: 1
+  hitLayer: 2
+  hitEmptyState: Empty
+  hitState: EnemyGetHit
 --- !u!1 &2100944616273381229
 GameObject:
   m_ObjectHideFlags: 0
