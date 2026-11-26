@@ -60,9 +60,6 @@ public class SwordPurchaseHandler : MonoBehaviour
                 if (!YG2.saves.boughtSwordsIDs.Contains(id))
                     YG2.saves.boughtSwordsIDs.Add(id);
 
-                YG2.saves.equippedSwordIndex_Model = i;
-                YG2.SaveProgress();
-
                 if (sharpening != null)
                 {
                     sharpening.ResetUpgrade();
@@ -81,8 +78,6 @@ public class SwordPurchaseHandler : MonoBehaviour
         if (YG2.saves.boughtSwordsIDs == null)
             YG2.saves.boughtSwordsIDs = new List<string>();
 
-        bool needSave = false;
-
         for (int i = 0; i < swords.Length; i++)
         {
             string id = swords[i].productID;
@@ -93,13 +88,7 @@ public class SwordPurchaseHandler : MonoBehaviour
             {
                 YG2.saves.boughtSwordsIDs.Add(id);
                 YG2.saves.equippedSwordIndex_Model = i;
-                needSave = true;
             }
-        }
-
-        if (needSave)
-        {
-            YG2.SaveProgress();
         }
 
         int indexToEquip = Mathf.Clamp(YG2.saves.equippedSwordIndex_Model, 0, swords.Length - 1);
@@ -118,20 +107,38 @@ public class SwordPurchaseHandler : MonoBehaviour
             }
         }
 
+        if (sharpening != null)
+        {
+            // Прячем старую ауру перед сменой модели, чтобы не осталась висеть
+            if (sharpening.bladeAuraObject != null && sharpening.bladeAuraObject != swords[index].auraObject)
+            {
+                sharpening.bladeAuraObject.SetActive(false);
+            }
+
+            sharpening.bladeAuraObject = swords[index].auraObject;
+            sharpening.bladeAuraMaterial = swords[index].auraMaterial;
+            sharpening.RefreshWeaponGlow();
+        }
+
+        YG2.saves.equippedSwordIndex_Model = index;
+
         if (playerStats != null)
         {
             if (swords[index].swordDamage > 0)
             {
-                playerStats.AtkDmg_Player = swords[index].swordDamage;
-            }
-            playerStats.UpdatePlayerStatsUI();
-        }
+                int sharpeningBonus = (sharpening != null)
+                    ? YG2.saves.currentSharpening_index * sharpening.bonusPerLevel
+                    : 0;
 
-        if (sharpening != null)
+                playerStats.AtkDmg_Player = swords[index].swordDamage + sharpeningBonus;
+            }
+
+            playerStats.UpdatePlayerStatsUI();
+            playerStats.SaveStats();
+        }
+        else
         {
-            sharpening.bladeAuraObject = swords[index].auraObject;
-            sharpening.bladeAuraMaterial = swords[index].auraMaterial;
-            sharpening.RefreshWeaponGlow();
+            YG2.SaveProgress();
         }
     }
 }

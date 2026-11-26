@@ -11,7 +11,7 @@ public class TreeTalent : MonoBehaviour
     [Header("Сколько прибавлять за 1 очко")]
     public int damagePerc = 2;
     public int defPerc = 2;
-    public int speedPerc = 1;
+    public float speedPerc = 1;
     public float atkSpeedPerc = 0.5f;
     public float maxAtkSpeed = 10f;
 
@@ -98,6 +98,7 @@ public class TreeTalent : MonoBehaviour
     {
         playerStats.UpdatePlayerStatsUI();
         UpdateTalentUI();
+        playerStats.SaveStats();
     }
 
     public void UpdateTalentUI()

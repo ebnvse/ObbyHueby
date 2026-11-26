@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using YG;
 
 public class Sharpening : MonoBehaviour
 {
@@ -43,11 +44,11 @@ public class Sharpening : MonoBehaviour
     [ColorUsage(true, true)]
     public Color[] upgradeGlowColors = new Color[]
     {
-        Color.black, Color.black, Color.black, Color.black, // +0..+3 (выкл)
-        Color.cyan, Color.cyan, // +4..+5
-        Color.blue, Color.blue, Color.blue, Color.blue, Color.blue, Color.blue, // +6..+11
-        Color.red, Color.red, Color.red, Color.red, // +12..+15
-        new Color(1f, 0.2f, 0.8f) // +16
+        Color.black, Color.black, Color.black, Color.black,
+        Color.cyan, Color.cyan,
+        Color.blue, Color.blue, Color.blue, Color.blue, Color.blue, Color.blue,
+        Color.red, Color.red, Color.red, Color.red,
+        new Color(1f, 0.2f, 0.8f)
     };
 
     private bool isSharpening = false;
@@ -61,10 +62,32 @@ public class Sharpening : MonoBehaviour
 
     private void Start()
     {
-        totalAddedDamage = currentUpgrade * bonusPerLevel;
+        if (YG2.isSDKEnabled)
+        {
+            LoadSharpening();
+        }
+    }
 
-        HideAllEffects();
+    private void OnEnable()
+    {
+        YG2.onGetSDKData += LoadSharpening;
         ResetProgressUI();
+        UpdateUI();
+        RefreshWeaponGlow();
+    }
+
+    private void OnDisable()
+    {
+        YG2.onGetSDKData -= LoadSharpening;
+        ResetProgressUI();
+        HideAllEffects();
+        RefreshWeaponGlow();
+    }
+
+    public void LoadSharpening()
+    {
+        currentUpgrade = YG2.saves.currentSharpening_index;
+        totalAddedDamage = currentUpgrade * bonusPerLevel;
         UpdateUI();
         UpdateWeaponGlow();
     }
@@ -119,6 +142,10 @@ public class Sharpening : MonoBehaviour
         HideAllEffects();
         UpdateWeaponGlow();
         UpdateUI();
+
+        YG2.saves.currentSharpening_index = 0;
+        if (playerStats != null) playerStats.SaveStats();
+        else YG2.SaveProgress();
     }
 
     public void StartSharpening()
@@ -250,6 +277,17 @@ public class Sharpening : MonoBehaviour
                 LogDebug("Провал! Заточка слетела до +0.");
             }
         }
+
+        YG2.saves.currentSharpening_index = currentUpgrade;
+
+        if (playerStats != null)
+        {
+            playerStats.SaveStats();
+        }
+        else
+        {
+            YG2.SaveProgress();
+        }
     }
 
     private void TriggerSuccessEffect()
@@ -357,18 +395,6 @@ public class Sharpening : MonoBehaviour
                 bladeAuraMaterial.color = auraColor;
             }
         }
-    }
-
-    private void OnEnable()
-    {
-        ResetProgressUI();
-        UpdateUI();
-    }
-
-    private void OnDisable()
-    {
-        ResetProgressUI();
-        HideAllEffects();
     }
 
     private void LogDebug(string message)

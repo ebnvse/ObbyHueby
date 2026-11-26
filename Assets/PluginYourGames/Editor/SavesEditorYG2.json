@@ -7,10 +7,16 @@
         false,
         false
     ],
-    "idSave": 5,
-    "boughtSwordsIDs": [
-        "ironSword",
-        "GoldenSword"
-    ],
-    "equippedSwordIndex_Model": 2
+    "idSave": 17,
+    "boughtSwordsIDs": [],
+    "equippedSwordIndex_Model": 0,
+    "currentSharpening_index": 0,
+    "level": 6,
+    "skillPoints": 0,
+    "currentExp": 44,
+    "expToNextLevel": 100,
+    "AtkDmg_Player": 140,
+    "Def_Player": 35,
+    "AtkSpped_Player": 3.0,
+    "Speed_Player": 35.0
 }

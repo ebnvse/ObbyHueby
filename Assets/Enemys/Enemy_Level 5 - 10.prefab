@@ -326,14 +326,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   EnemyLevel: 5
+  levelDifferenceThreshold: 5
   maxHealth: 400
   currentHealth: 400
   isDead: 0
+  textEnemyLevel: {fileID: 5677195561831377262}
   healthBarObject: {fileID: 2308396550573586661}
   healthFillImage: {fileID: 4174567239333554673}
   healthText: {fileID: 8418744265817136476}
-  AtkDmg_Enemy: 35
-  Def_Enemy: 5
+  AtkDmg_Enemy: 25
+  Def_Enemy: 0
   AtkSpped_Enemy: 0
   Speed_Enemy: 0
   audioSource: {fileID: 5999418786184415271}
@@ -1378,7 +1380,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &98425036933056902
 RectTransform:
   m_ObjectHideFlags: 0

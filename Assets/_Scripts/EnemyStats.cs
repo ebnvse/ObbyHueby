@@ -6,10 +6,13 @@ public class EnemyStats : MonoBehaviour
 {
     [Header("Уровень")]
     public int EnemyLevel;
+    public int levelDifferenceThreshold = 5;
+
     [Header("Здоровье врага")]
     public int maxHealth = 100;
     public int currentHealth;
     public bool isDead;
+    public TextMeshProUGUI textEnemyLevel;
 
     [Header("UI Здоровья врага")]
     [Tooltip("Родительский объект всей полоски ХП (Canvas или фон), который прячется до первого удара")]
@@ -29,6 +32,7 @@ public class EnemyStats : MonoBehaviour
     public AudioClip[] enemyDeathSounds;   // Звуки смерти врага
 
     private Enemy enemyAI;
+    private PlayerStats playerStats;
 
     private void Awake()
     {
@@ -40,15 +44,64 @@ public class EnemyStats : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        PlayerEvents.OnPlayerLevelChanged += UpdateLevelColor;
+    }
+
+    private void OnDisable()
+    {
+        PlayerEvents.OnPlayerLevelChanged -= UpdateLevelColor;
+    }
+
     private void Start()
     {
         currentHealth = maxHealth;
         UpdateHealthUI();
 
-        // Прячем полоску здоровья на старте игры
         if (healthBarObject != null)
         {
             healthBarObject.SetActive(false);
+        }
+
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+        {
+            playerStats = playerObj.GetComponentInParent<PlayerStats>();
+        }
+
+        int playerLvl = playerStats != null ? playerStats.currentLevelPlayer : 1;
+        UpdateLevelColor(playerLvl);
+    }
+
+    public void UpdateLevelColor(int playerLevel)
+    {
+        if (textEnemyLevel == null) return;
+
+        textEnemyLevel.gameObject.SetActive(true);
+        textEnemyLevel.text = $"Уровень {EnemyLevel}";
+
+        int levelDifference = EnemyLevel - playerLevel;
+
+        // Красивый светло-синий (голубой) цвет, который хорошо читается на любом фоне
+        Color lightBlue = new Color(0.3f, 0.75f, 1f);
+
+        if (levelDifference < 0)
+        {
+            // Враг младше: плавный переход от белого (0) к светло-синему (-5 и ниже)
+            float t = Mathf.Clamp01(Mathf.Abs(levelDifference) / 5f);
+            textEnemyLevel.color = Color.Lerp(Color.white, lightBlue, t);
+        }
+        else if (levelDifference > 0)
+        {
+            // Враг старше: плавный переход от белого (0) к красному (+5 и выше)
+            float t = Mathf.Clamp01(levelDifference / 5f);
+            textEnemyLevel.color = Color.Lerp(Color.white, Color.red, t);
+        }
+        else
+        {
+            // Уровни полностью равны -> чисто белый
+            textEnemyLevel.color = Color.white;
         }
     }
 
@@ -63,7 +116,6 @@ public class EnemyStats : MonoBehaviour
         currentHealth -= damage;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
-        // Включаем полоску здоровья при первом получении урона
         if (healthBarObject != null && !healthBarObject.activeSelf)
         {
             healthBarObject.SetActive(true);
