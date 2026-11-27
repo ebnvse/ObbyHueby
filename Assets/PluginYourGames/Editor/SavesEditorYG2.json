@@ -7,16 +7,18 @@
         false,
         false
     ],
-    "idSave": 17,
+    "idSave": 73,
     "boughtSwordsIDs": [],
     "equippedSwordIndex_Model": 0,
     "currentSharpening_index": 0,
-    "level": 6,
-    "skillPoints": 0,
-    "currentExp": 44,
-    "expToNextLevel": 100,
-    "AtkDmg_Player": 140,
-    "Def_Player": 35,
-    "AtkSpped_Player": 3.0,
-    "Speed_Player": 35.0
+    "level": 9,
+    "skillPoints": 1,
+    "currentExp": 102,
+    "expToNextLevel": 130,
+    "AtkDmg_Player": 20,
+    "Def_Player": 10,
+    "AtkSpped_Player": 1.0,
+    "Speed_Player": 15.0,
+    "current_money": 0,
+    "hasMoneySave": false
 }

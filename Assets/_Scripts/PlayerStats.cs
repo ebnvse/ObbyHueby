@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System;
+using System.Collections;
 using YG;
 
 public class PlayerStats : MonoBehaviour
@@ -13,12 +14,12 @@ public class PlayerStats : MonoBehaviour
     public int Def_Player = 10;
     public float AtkSpped_Player = 1f;
     public float baseAttackCooldown = 0.5f;
-    public float Speed_Player = 5;
+    public float Speed_Player = 5f;
     public TreeTalent treeTalent;
     public PlayerController playerController;
     public AttackController attackController;
     public ParryController parryController;
-    
+
     [Header("Критический урон")]
     public float Critical_Chance_multiplier = 1.5f;
     public float Critical_Chance = 0.1f;
@@ -29,7 +30,7 @@ public class PlayerStats : MonoBehaviour
     public bool isDead = false;
 
     [Header("Управление и движение")]
-    public MonoBehaviour movementScript; 
+    public MonoBehaviour movementScript;
 
     [Header("Уровень и опыт")]
     public int NextLevelPlayer;
@@ -72,12 +73,21 @@ public class PlayerStats : MonoBehaviour
 
     [Header("Всплывающий 2D урон")]
     public DamagePopup2D damagePopupPrefab;
-    public Canvas mainUICanvas; 
+    public Canvas mainUICanvas;
     public RectTransform spawnPoint;
+
+    [Header("Сохранение")]
+    [Min(0.1f)] public float saveDelaySeconds = 1f;
 
     private CharacterController characterController;
     private Rigidbody rb;
     public BuffManager buffManager;
+
+    private bool hasLoadedProgress;
+    private Coroutine saveCoroutine;
+    private bool saveRequested;
+
+    public bool HasLoadedProgress => hasLoadedProgress;
 
     private void Awake()
     {
@@ -93,46 +103,72 @@ public class PlayerStats : MonoBehaviour
     private void OnDisable()
     {
         YG2.onGetSDKData -= LoadStats;
+        SaveImmediatelyIfReady();
     }
 
     private void Start()
     {
         isDead = false;
-
         if (deathPanel != null)
             deathPanel.SetActive(false);
 
-        if (YG2.isSDKEnabled)
+        if (YG2.isSDKEnabled || Application.isEditor || 
+            Application.platform != RuntimePlatform.WebGLPlayer)
         {
             LoadStats();
         }
-        else
-        {
-            ApplyLoadedStatsToGame();
-        }
     }
+
+
 
     public void LoadStats()
     {
-        if (YG2.saves.level > 0)
-        {
-            currentLevelPlayer = YG2.saves.level;
-            currentExp = YG2.saves.currentExp;
-            expToNextLevel = YG2.saves.expToNextLevel > 0 ? YG2.saves.expToNextLevel : 50;
+        if (hasLoadedProgress) return;
+
+        currentLevelPlayer = Mathf.Max(1, YG2.saves.level);
+        currentExp = Mathf.Max(0, YG2.saves.currentExp);
+        expToNextLevel = YG2.saves.expToNextLevel > 0
+            ? YG2.saves.expToNextLevel
+            : 50;
+
+        if (YG2.saves.AtkDmg_Player > 0)
             AtkDmg_Player = YG2.saves.AtkDmg_Player;
+
+        if (YG2.saves.Def_Player >= 0)
             Def_Player = YG2.saves.Def_Player;
-            AtkSpped_Player = YG2.saves.AtkSpped_Player > 0 ? YG2.saves.AtkSpped_Player : 1f;
-            Speed_Player = YG2.saves.Speed_Player > 0 ? YG2.saves.Speed_Player : 5f;
+
+        if (YG2.saves.AtkSpped_Player > 0f)
+            AtkSpped_Player = YG2.saves.AtkSpped_Player;
+
+        if (YG2.saves.Speed_Player > 0f)
+            Speed_Player = YG2.saves.Speed_Player;
+        if (treeTalent != null)
+        {
+            treeTalent.current_score = Mathf.Max(0, YG2.saves.skillPoints);
+            treeTalent.UpdateTalentUI();
         }
 
+        currentExp = Mathf.Clamp(currentExp, 0, Mathf.Max(0, expToNextLevel - 1));
+        hasLoadedProgress = true;
+
         ApplyLoadedStatsToGame();
+
+        SaveStats();
+        SaveToYandex.NotifyStatsLoaded();
     }
 
     private void ApplyLoadedStatsToGame()
     {
+        currentLevelPlayer = Mathf.Max(1, currentLevelPlayer);
+        expToNextLevel = Mathf.Max(1, expToNextLevel);
+        currentExp = Mathf.Clamp(currentExp, 0, expToNextLevel - 1);
+
         maxHealth = 100 + (currentLevelPlayer - 1) * 45;
         currentHealth = maxHealth;
         NextLevelPlayer = currentLevelPlayer + 1;
+
+        if (playerController != null)
+            playerController.runSpeed = Speed_Player;
 
         ApplyAttackSpeed();
         UpdateHealthUI();
@@ -143,23 +179,85 @@ public class PlayerStats : MonoBehaviour
         OnStatsUpdated?.Invoke();
     }
 
+    private void WriteStatsToSaves()
+    {
+        YG2.saves.level = Mathf.Max(1, currentLevelPlayer);
+        YG2.saves.currentExp = Mathf.Max(0, currentExp);
+        YG2.saves.expToNextLevel = Mathf.Max(1, expToNextLevel);
+
+        // Временные рекламные бафы не должны становиться постоянными
+        // характеристиками после сохранения или перезапуска игры.
+        int temporaryAtk = buffManager != null ? buffManager.activeBonusAtk : 0;
+        int temporaryDef = buffManager != null ? buffManager.activeBonusDef : 0;
+        float temporaryAtkSpeed = buffManager != null ? buffManager.activeBonusAtkSpeed : 0f;
+        float temporarySpeed = buffManager != null ? buffManager.activeBonusSpeed : 0f;
+
+        YG2.saves.AtkDmg_Player = Mathf.Max(1, AtkDmg_Player - temporaryAtk);
+        YG2.saves.Def_Player = Mathf.Max(0, Def_Player - temporaryDef);
+        YG2.saves.AtkSpped_Player = Mathf.Max(0.01f, AtkSpped_Player - temporaryAtkSpeed);
+        YG2.saves.Speed_Player = Mathf.Max(0.01f, Speed_Player - temporarySpeed);
+
+        if (treeTalent != null)
+            YG2.saves.skillPoints = Mathf.Max(0, treeTalent.current_score);
+    }
+
     public void SaveStats()
     {
-        int bonusAtk = buffManager != null ? buffManager.activeBonusAtk : 0;
-        int bonusDef = buffManager != null ? buffManager.activeBonusDef : 0;
-        float bonusAtkSpeed = buffManager != null ? buffManager.activeBonusAtkSpeed : 0f;
-        float bonusSpeed = buffManager != null ? buffManager.activeBonusSpeed : 0f;
-        
-        YG2.saves.level = currentLevelPlayer;
-        YG2.saves.currentExp = currentExp;
-        YG2.saves.expToNextLevel = expToNextLevel;
-        YG2.saves.AtkDmg_Player = AtkDmg_Player;
-        YG2.saves.Def_Player = Def_Player;
-        YG2.saves.AtkSpped_Player = AtkSpped_Player;
-        YG2.saves.Speed_Player = Speed_Player;
+        if (!hasLoadedProgress)
+        {
+            Debug.LogWarning("[PlayerStats] Сохранение пропущено: данные ещё не загружены.");
+            return;
+        }
+
+        WriteStatsToSaves();
+        saveRequested = true;
+
+        if (saveCoroutine == null)
+            saveCoroutine = StartCoroutine(SaveQueue());
+
+        OnStatsUpdated?.Invoke();
+    }
+
+        private IEnumerator SaveQueue()
+    {
+        while (saveRequested)
+        {
+            saveRequested = false;
+            yield return new WaitForSecondsRealtime(Mathf.Max(0.1f, saveDelaySeconds));
+
+            YG2.SaveProgress();
+            Debug.Log("[PlayerStats] Прогресс сохранён.");
+        }
+
+        saveCoroutine = null;
+    }
+
+    private void SaveImmediatelyIfReady()
+    {
+        if (!hasLoadedProgress) return;
+
+        WriteStatsToSaves();
+        saveRequested = false;
+
+        if (saveCoroutine != null)
+        {
+            StopCoroutine(saveCoroutine);
+            saveCoroutine = null;
+        }
 
         YG2.SaveProgress();
-        OnStatsUpdated?.Invoke();
+    }
+
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus)
+            SaveImmediatelyIfReady();
+    }
+
+    private void OnApplicationQuit()
+    {
+        SaveImmediatelyIfReady();
     }
 
     public void ApplyAttackSpeed()
@@ -169,8 +267,8 @@ public class PlayerStats : MonoBehaviour
         float safeSpeed = Mathf.Clamp(AtkSpped_Player, 1f, 10f);
         attackController.attackCooldown = baseAttackCooldown / safeSpeed;
     }
-
-    public int CalculationAtackDamagePlayer(int Enemy_Def, int Player_AtackDamage, float critChanse, float critMultipler, int enemyLevel, float damageMultiplier = 1f)
+        public int CalculationAtackDamagePlayer(int Enemy_Def, int Player_AtackDamage,
+        float critChanse, float critMultipler, int enemyLevel, float damageMultiplier = 1f)
     {
         int levelDifference = currentLevelPlayer - enemyLevel;
         int levelBonusDamage = levelDifference > 0 ? levelDifference * 5 : 0;
@@ -182,8 +280,7 @@ public class PlayerStats : MonoBehaviour
         if (isCrit)
         {
             if (critSound != null) critSound.Play(transform.position, 0.4f);
-            int critDamage = Mathf.RoundToInt(totalAttack * critMultipler);
-            damage = critDamage - Enemy_Def;
+            damage = Mathf.RoundToInt(totalAttack * critMultipler) - Enemy_Def;
         }
         else
         {
@@ -197,7 +294,6 @@ public class PlayerStats : MonoBehaviour
 
         finalDamage = Mathf.Max(1, Mathf.RoundToInt(finalDamage * damageMultiplier));
         ShowDamagePopup(finalDamage, isCrit);
-
         return finalDamage;
     }
 
@@ -225,7 +321,7 @@ public class PlayerStats : MonoBehaviour
     public void UpdateHealthUI()
     {
         if (healthFillImage != null)
-            healthFillImage.fillAmount = (float)currentHealth / maxHealth;
+            healthFillImage.fillAmount = maxHealth > 0 ? (float)currentHealth / maxHealth : 0f;
 
         if (healthText != null)
             healthText.text = $"{currentHealth} / {maxHealth}";
@@ -278,7 +374,7 @@ public class PlayerStats : MonoBehaviour
         if (Def_Player_Text != null) Def_Player_Text.text = $"Защита: {Def_Player}";
         if (AtkSpped_Player_Text != null) AtkSpped_Player_Text.text = $"Скорость атаки: {AtkSpped_Player:0.#}";
         if (Speed_Player_Text != null) Speed_Player_Text.text = $"Скорость бега: {Speed_Player}";
-        
+
         int critPercent = Mathf.RoundToInt(Critical_Chance * 100f);
         if (Critical_Chance_Text != null) Critical_Chance_Text.text = $"Шанс Крит. Атаки: {critPercent}%";
         if (Panel_AtkDmg_Player_Text != null) Panel_AtkDmg_Player_Text.text = $"Атака: {AtkDmg_Player}";
@@ -290,7 +386,9 @@ public class PlayerStats : MonoBehaviour
 
         DamagePopup2D popup = Instantiate(damagePopupPrefab, mainUICanvas.transform);
         RectTransform popupRect = popup.GetComponent<RectTransform>();
-        popupRect.anchoredPosition = spawnPoint != null ? spawnPoint.anchoredPosition : Vector2.zero;
+        if (popupRect != null)
+            popupRect.anchoredPosition = spawnPoint != null ? spawnPoint.anchoredPosition : Vector2.zero;
+
         popup.Setup(damage, isCrit);
     }
 
@@ -300,15 +398,19 @@ public class PlayerStats : MonoBehaviour
 
         float ratio = Mathf.Clamp01((float)currentExp / expToNextLevel);
         if (expFillImage != null) expFillImage.fillAmount = ratio;
-        if (currentExpPlayer_Text != null) currentExpPlayer_Text.text = $"{Mathf.RoundToInt(ratio * 100f)}%";
+        if (currentExpPlayer_Text != null)
+            currentExpPlayer_Text.text = $"{Mathf.RoundToInt(ratio * 100f)}%";
 
         UpdateLevelTexts();
     }
 
     private void UpdateLevelTexts()
     {
-        if (currentLevelPlayer_Text != null) currentLevelPlayer_Text.text = currentLevelPlayer.ToString();
-        if (NextLevelPlayer_Text != null) NextLevelPlayer_Text.text = NextLevelPlayer.ToString();
+        if (currentLevelPlayer_Text != null)
+            currentLevelPlayer_Text.text = currentLevelPlayer.ToString();
+
+        if (NextLevelPlayer_Text != null)
+            NextLevelPlayer_Text.text = NextLevelPlayer.ToString();
     }
 
     public void LevelUp()
@@ -318,8 +420,8 @@ public class PlayerStats : MonoBehaviour
         NextLevelPlayer = currentLevelPlayer + 1;
         expToNextLevel += 10;
 
-        if (currentLevelPlayer % 5 == 0)
-            treeTalent?.AddSkillPoints(1);
+        if (currentLevelPlayer % 5 == 0 && treeTalent != null)
+            treeTalent.AddSkillPoints(1);
 
         maxHealth += 45;
         currentHealth = maxHealth;
@@ -328,28 +430,28 @@ public class PlayerStats : MonoBehaviour
         if (levelUpSound != null) levelUpSound.Play2D();
 
         PlayerEvents.InvokePlayerLevelChanged(currentLevelPlayer);
+        UpdateExpUIImmediate();
         SaveStats();
     }
 
     public void AddExpToPlayer(int enemyLevel)
     {
+        if (!hasLoadedProgress) return;
+
         float penaltyFactor = Mathf.Pow(expGainMultiplierPerLevel, currentLevelPlayer - 1);
         float rawExp = baseExpReward * penaltyFactor;
-
         int levelDiff = currentLevelPlayer - enemyLevel;
 
         if (levelDiff >= 7) return;
-        else if (levelDiff >= 5) rawExp *= 0.1f;
+        if (levelDiff >= 5) rawExp *= 0.1f;
         else if (levelDiff >= 3) rawExp *= 0.7f;
 
-        int gainedExp = Mathf.Max(1, Mathf.RoundToInt(rawExp));
-        currentExp += gainedExp;
+        currentExp += Mathf.Max(1, Mathf.RoundToInt(rawExp));
 
         while (currentExp >= expToNextLevel)
-        {
             LevelUp();
-        }
 
         UpdateExpUIImmediate();
+        SaveStats();
     }
 }

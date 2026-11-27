@@ -11,7 +11,7 @@ public class TreeTalent : MonoBehaviour
     [Header("Сколько прибавлять за 1 очко")]
     public int damagePerc = 2;
     public int defPerc = 2;
-    public float speedPerc = 1;
+    public float speedPerc = 1f;
     public float atkSpeedPerc = 0.5f;
     public float maxAtkSpeed = 10f;
 
@@ -26,68 +26,70 @@ public class TreeTalent : MonoBehaviour
 
     private void Start()
     {
-        if (Damage_Button != null)
-            Damage_Button.onClick.AddListener(UpgradeDamage);
-
-        if (Def_Button != null)
-            Def_Button.onClick.AddListener(UpgradeDefense);
-
-        if (Speed_Button != null)
-            Speed_Button.onClick.AddListener(UpgradeSpeed);
-
-        if (AtkSpeed_Button != null)
-            AtkSpeed_Button.onClick.AddListener(UpgradeAtkSpeed);
-
+        if (Damage_Button != null) Damage_Button.onClick.AddListener(UpgradeDamage);
+        if (Def_Button != null) Def_Button.onClick.AddListener(UpgradeDefense);
+        if (Speed_Button != null) Speed_Button.onClick.AddListener(UpgradeSpeed);
+        if (AtkSpeed_Button != null) AtkSpeed_Button.onClick.AddListener(UpgradeAtkSpeed);
         UpdateTalentUI();
+    }
+
+    private void OnDestroy()
+    {
+        if (Damage_Button != null) Damage_Button.onClick.RemoveListener(UpgradeDamage);
+        if (Def_Button != null) Def_Button.onClick.RemoveListener(UpgradeDefense);
+        if (Speed_Button != null) Speed_Button.onClick.RemoveListener(UpgradeSpeed);
+        if (AtkSpeed_Button != null) AtkSpeed_Button.onClick.RemoveListener(UpgradeAtkSpeed);
     }
 
     public void UpgradeDamage()
     {
-        if (!TrySpendPoint()) return;
-
+        if (playerStats == null || !TrySpendPoint()) return;
         playerStats.AtkDmg_Player += damagePerc;
         ApplyChanges();
     }
 
     public void UpgradeDefense()
     {
-        if (!TrySpendPoint()) return;
-
+        if (playerStats == null || !TrySpendPoint()) return;
         playerStats.Def_Player += defPerc;
         ApplyChanges();
     }
 
     public void UpgradeSpeed()
     {
-        if (!TrySpendPoint()) return;
-
+        if (playerStats == null || !TrySpendPoint()) return;
         playerStats.Speed_Player += speedPerc;
+
         if (playerStats.playerController != null)
-        {
             playerStats.playerController.runSpeed = playerStats.Speed_Player;
-        }
+
         ApplyChanges();
     }
 
     public void UpgradeAtkSpeed()
     {
-        if (playerStats == null || playerStats.AtkSpped_Player >= maxAtkSpeed) return;
-        if (!TrySpendPoint()) return;
+        if (playerStats == null || playerStats.AtkSpped_Player >= maxAtkSpeed || !TrySpendPoint()) return;
 
-        playerStats.AtkSpped_Player = Mathf.Min(maxAtkSpeed, playerStats.AtkSpped_Player + atkSpeedPerc);
+        playerStats.AtkSpped_Player =
+            Mathf.Min(maxAtkSpeed, playerStats.AtkSpped_Player + atkSpeedPerc);
+
         playerStats.ApplyAttackSpeed();
         ApplyChanges();
     }
 
     public void AddSkillPoints(int amount = 1)
     {
+        if (amount <= 0) return;
         current_score += amount;
         UpdateTalentUI();
+
+        if (playerStats != null)
+            playerStats.SaveStats();
     }
 
     private bool TrySpendPoint()
     {
-        if (current_score <= 0 || playerStats == null)
+        if (playerStats == null || !playerStats.HasLoadedProgress || current_score <= 0)
             return false;
 
         current_score--;
@@ -103,17 +105,17 @@ public class TreeTalent : MonoBehaviour
 
     public void UpdateTalentUI()
     {
+        current_score = Mathf.Max(0, current_score);
+
         if (scoreText != null)
-        {
             scoreText.text = $"Очки умений: {current_score}";
-        }
 
         bool hasPoints = current_score > 0;
-
         if (Damage_Button != null) Damage_Button.interactable = hasPoints;
         if (Def_Button != null) Def_Button.interactable = hasPoints;
         if (Speed_Button != null) Speed_Button.interactable = hasPoints;
         if (AtkSpeed_Button != null)
-            AtkSpeed_Button.interactable = hasPoints && (playerStats != null && playerStats.AtkSpped_Player < maxAtkSpeed);
+            AtkSpeed_Button.interactable = hasPoints && playerStats != null &&
+                                           playerStats.AtkSpped_Player < maxAtkSpeed;
     }
 }
